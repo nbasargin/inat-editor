@@ -32,6 +32,7 @@
     "@angular-eslint/template-parser": "17.1.1",
     "@angular/cli": "^17.0.8",
     "@angular/compiler-cli": "^17.0.0",
+    "@types/wicg-file-system-access": "^2023.10.4",
     "@typescript-eslint/eslint-plugin": "6.13.1",
     "@typescript-eslint/parser": "6.13.1",
     "eslint": "^8.54.0",

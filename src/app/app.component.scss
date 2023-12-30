@@ -1,0 +1,29 @@
+:host {
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.main-layout {
+  display: grid;
+  grid-template-areas: 'header header' 'sidepanel contentpanel';
+  grid-template-columns: 1fr 5fr;
+  grid-template-rows: 48px 1fr;
+  width: 100%;
+  height: 100%;
+}
+
+.header {
+  grid-area: header;
+}
+
+.side-panel {
+  grid-area: sidepanel;
+}
+
+.content-panel {
+  grid-area: contentpanel;
+}
