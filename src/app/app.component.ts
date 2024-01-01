@@ -18,8 +18,12 @@ import { ImageEditorComponent } from './image-editor/image-editor.component';
   template: `
     <ie-file-access-not-supported *ngIf="!fileApiSupported"></ie-file-access-not-supported>
     <div class="main-layout" *ngIf="fileApiSupported">
-      <ie-folder-selector class="header"></ie-folder-selector>
-      <ie-file-list class="side-panel"></ie-file-list>
+      <ie-folder-selector
+        [selectedFolder]="selectedFolder"
+        (folderSelected)="setSelectedFolder($event)"
+        class="header"
+      ></ie-folder-selector>
+      <ie-file-list [fileList]="folderContents" class="side-panel"></ie-file-list>
       <ie-image-editor class="content-panel"></ie-image-editor>
     </div>
   `,
@@ -27,8 +31,24 @@ import { ImageEditorComponent } from './image-editor/image-editor.component';
 })
 export class AppComponent {
   fileApiSupported: boolean;
+  selectedFolder: FileSystemDirectoryHandle | undefined = undefined;
+  folderContents: Array<FileSystemDirectoryHandle | FileSystemFileHandle> = [];
 
   constructor() {
     this.fileApiSupported = !!window.showOpenFilePicker;
+  }
+
+  async setSelectedFolder(selectedFolder: FileSystemDirectoryHandle | undefined) {
+    this.selectedFolder = selectedFolder;
+    if (!selectedFolder) {
+      this.folderContents = []; // no files
+      return;
+    }
+
+    const folderContents: Array<FileSystemDirectoryHandle | FileSystemFileHandle> = [];
+    for await (const entry of selectedFolder.values()) {
+      folderContents.push(entry);
+    }
+    this.folderContents = folderContents;
   }
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'ie-folder-selector',
@@ -6,18 +6,25 @@ import { Component } from '@angular/core';
   imports: [],
   template: `
     <div>
-      <button (click)="openFolder()">Open folder</button>
-      <span>{{ currentFolder?.name }}</span>
+      <button (click)="selectFolder()">Open folder</button>
+      <span>{{ selectedFolder?.name }}</span>
     </div>
   `,
   styleUrl: 'folder-selector.component.scss',
 })
 export class FolderSelectorComponent {
-  currentFolder: FileSystemDirectoryHandle | undefined;
+  @Input() selectedFolder: FileSystemDirectoryHandle | undefined;
 
-  async openFolder() {
-    console.log('open folder');
-    this.currentFolder = await window.showDirectoryPicker();
-    console.log(this.currentFolder);
+  @Output() folderSelected = new EventEmitter<FileSystemDirectoryHandle | undefined>();
+
+  async selectFolder() {
+    try {
+      const selectedFolder = await window.showDirectoryPicker();
+      console.log('opened folder', selectedFolder);
+      this.folderSelected.emit(selectedFolder);
+    } catch (e) {
+      console.error('Error opening folder', e);
+      this.folderSelected.emit(undefined);
+    }
   }
 }
