@@ -1,3 +1,5 @@
+@use '@angular/material' as mat;
+
 :host {
   display: block;
   position: absolute;
@@ -10,7 +12,7 @@
 .main-layout {
   display: grid;
   grid-template-areas: 'header header' 'sidepanel contentpanel';
-  grid-template-columns: 17% 1fr;
+  grid-template-columns: 20% 1fr;
   grid-template-rows: auto 1fr;
   width: 100%;
   height: 100%;
@@ -18,10 +20,14 @@
 
 .header {
   grid-area: header;
+  z-index: 20;
+  @include mat.elevation(4);
 }
 
 .side-panel {
   grid-area: sidepanel;
+  z-index: 10;
+  @include mat.elevation(4);
 }
 
 .content-panel {

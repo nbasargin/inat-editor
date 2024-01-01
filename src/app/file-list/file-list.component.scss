@@ -1,10 +1,9 @@
 :host {
-  background: #ccc;
   display: flex;
   flex-flow: column nowrap;
-  overflow-y: scroll;
+  overflow-y: auto;
   gap: 4px;
-  padding: 4px;
+  padding: 8px 4px 4px;
 }
 
 .folder-entry {
@@ -12,10 +11,17 @@
   align-items: center;
   gap: 4px;
   cursor: default;
+  padding: 2px;
+  border-radius: 4px;
 
   &:hover {
-    background: #ddd;
+    background: #eee;
   }
+}
+
+.empty-list-message {
+  color: #999;
+  pointer-events: none;
 }
 
 .entry-icon {

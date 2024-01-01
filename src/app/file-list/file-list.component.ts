@@ -17,6 +17,10 @@ interface FolderEntry {
       <mat-icon [fontIcon]="entry.icon" class="entry-icon"></mat-icon>
       <span class="entry-name" [matTooltip]="entry.file.name" [matTooltipShowDelay]="200">{{ entry.file.name }}</span>
     </div>
+    <div *ngIf="folderEntries.length === 0" class="folder-entry empty-list-message">
+      <mat-icon [fontIcon]="'block'" class="entry-icon"></mat-icon>
+      <span class="entry-name">No files</span>
+    </div>
   `,
   styleUrl: 'file-list.component.scss',
 })

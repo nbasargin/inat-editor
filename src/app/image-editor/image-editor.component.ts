@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'ie-image-editor',
   standalone: true,
   imports: [],
-  template: ` <p>image-editor works!</p> `,
+  template: ` <div></div> `,
   styleUrl: 'image-editor.component.scss',
 })
 export class ImageEditorComponent {}
