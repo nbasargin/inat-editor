@@ -21,10 +21,12 @@ import { ImageEditorComponent } from './image-editor/image-editor.component';
       <ie-folder-selector
         [selectedFolder]="selectedFolder"
         (folderSelected)="setSelectedFolder($event)"
-        class="header"
+        class="main-header"
       ></ie-folder-selector>
-      <ie-file-list [fileList]="folderContents" class="side-panel"></ie-file-list>
-      <ie-image-editor class="content-panel"></ie-image-editor>
+      <div class="main-content">
+        <ie-file-list [fileList]="folderContents" class="side-panel"></ie-file-list>
+        <ie-image-editor></ie-image-editor>
+      </div>
     </div>
   `,
   styleUrl: 'app.component.scss',
