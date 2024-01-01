@@ -1,14 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'ie-folder-selector',
   standalone: true,
-  imports: [],
+  imports: [MatButtonModule],
   template: `
-    <div>
-      <button (click)="selectFolder()">Open folder</button>
-      <span>{{ selectedFolder?.name }}</span>
-    </div>
+    <button mat-raised-button color="primary" (click)="selectFolder()">Open Folder</button>
+    <span class="folder-name">{{ selectedFolder?.name }}</span>
   `,
   styleUrl: 'folder-selector.component.scss',
 })

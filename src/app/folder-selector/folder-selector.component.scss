@@ -1,4 +1,12 @@
 :host {
-  display: block;
   background-color: #aaa;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: baseline;
+  padding: 4px;
+  gap: 8px;
+}
+
+.folder-name {
+  font-weight: 500;
 }
