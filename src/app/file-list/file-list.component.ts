@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
-import { FsItem } from '../file-list-item';
+import { FsItem } from '../fs-item';
 
 interface FileListItem {
   fsItem: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>;

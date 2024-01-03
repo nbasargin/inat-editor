@@ -5,7 +5,7 @@ import { FileAccessNotSupportedComponent } from './file-access-not-supported/fil
 import { FolderSelectorComponent } from './folder-selector/folder-selector.component';
 import { ImageEditorComponent } from './image-editor/image-editor.component';
 
-import { FsItem } from './file-list-item';
+import { FsItem } from './fs-item';
 
 @Component({
   selector: 'ie-root',
