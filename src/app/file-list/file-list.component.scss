@@ -18,6 +18,10 @@
   &:hover {
     background: #eee;
   }
+
+  &.selected {
+    font-weight: bold;
+  }
 }
 
 .empty-list-message {

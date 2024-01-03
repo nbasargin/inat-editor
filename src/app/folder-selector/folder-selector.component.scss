@@ -5,8 +5,19 @@
   align-items: baseline;
   padding: 4px;
   gap: 8px;
+  overflow: hidden;
+}
+
+.open-folder-button {
+  flex-shrink: 0;
 }
 
 .folder-name {
   font-weight: 500;
+  white-space: nowrap;
+
+  &:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }

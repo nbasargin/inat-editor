@@ -13,7 +13,12 @@ interface FileListItem {
   imports: [CommonModule, MatIconModule, MatTooltipModule],
   providers: [{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: { disableTooltipInteractivity: true } }],
   template: `
-    <div *ngFor="let listItem of fileListItems" class="folder-entry" (click)="clickEntry(listItem.fsHandle)">
+    <div
+      *ngFor="let listItem of fileListItems"
+      class="folder-entry"
+      [class.selected]="listItem.fsHandle === selectedFile"
+      (click)="clickListItem(listItem.fsHandle)"
+    >
       <mat-icon [fontIcon]="listItem.icon" class="entry-icon"></mat-icon>
       <span class="entry-name" [matTooltip]="listItem.fsHandle.name" [matTooltipShowDelay]="200">{{
         listItem.fsHandle.name
@@ -33,6 +38,7 @@ export class FileListComponent {
   @Input() set fileList(list: Array<FileSystemDirectoryHandle | FileSystemFileHandle>) {
     this.fileListItems = list.map((file) => this.fsHandleToListItem(file));
   }
+  @Input() selectedFile: FileSystemFileHandle | undefined = undefined;
 
   @Output() folderSelected = new EventEmitter<FileSystemDirectoryHandle | undefined>();
   @Output() fileSelected = new EventEmitter<FileSystemFileHandle | undefined>();
@@ -45,7 +51,11 @@ export class FileListComponent {
     };
   }
 
-  clickEntry(file: FileSystemDirectoryHandle | FileSystemFileHandle) {
-    console.log(file);
+  clickListItem(file: FileSystemDirectoryHandle | FileSystemFileHandle) {
+    if (file instanceof FileSystemFileHandle) {
+      this.fileSelected.emit(file);
+    } else {
+      console.log('Folder click');
+    }
   }
 }

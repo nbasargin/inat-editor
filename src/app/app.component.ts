@@ -20,11 +20,17 @@ import { ImageEditorComponent } from './image-editor/image-editor.component';
     <div class="main-layout" *ngIf="fileApiSupported">
       <ie-folder-selector
         [selectedFolder]="selectedFolder"
+        [selectedFile]="selectedFile"
         (folderSelected)="setSelectedFolder($event)"
         class="main-header"
       ></ie-folder-selector>
       <div class="main-content">
-        <ie-file-list [fileList]="folderContents" class="side-panel"></ie-file-list>
+        <ie-file-list
+          [fileList]="folderContents"
+          [selectedFile]="selectedFile"
+          (fileSelected)="setSelectedFile($event)"
+          class="side-panel"
+        ></ie-file-list>
         <ie-image-editor></ie-image-editor>
       </div>
     </div>
@@ -34,6 +40,7 @@ import { ImageEditorComponent } from './image-editor/image-editor.component';
 export class AppComponent {
   fileApiSupported: boolean;
   selectedFolder: FileSystemDirectoryHandle | undefined = undefined;
+  selectedFile: FileSystemFileHandle | undefined = undefined;
   folderContents: Array<FileSystemDirectoryHandle | FileSystemFileHandle> = [];
 
   constructor() {
@@ -52,5 +59,9 @@ export class AppComponent {
       folderContents.push(entry);
     }
     this.folderContents = folderContents;
+  }
+
+  setSelectedFile(selectedFile: FileSystemFileHandle | undefined) {
+    this.selectedFile = selectedFile;
   }
 }
