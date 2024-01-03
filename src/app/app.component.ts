@@ -56,7 +56,7 @@ export class AppComponent {
     this.selectedFile = null;
     const folderContents: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>> = [];
     for await (const entry of selectedFolder.handle.values()) {
-      folderContents.push({ handle: entry, parent: selectedFolder });
+      folderContents.push(new FsItem(entry, selectedFolder));
     }
     this.folderContents = folderContents;
   }

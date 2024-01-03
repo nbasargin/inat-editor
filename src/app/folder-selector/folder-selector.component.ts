@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { FsItem } from '../fs-item';
 
@@ -9,13 +9,13 @@ import { FsItem } from '../fs-item';
   imports: [MatButtonModule, CommonModule],
   template: `
     <button mat-raised-button color="primary" (click)="selectFolder()" class="open-folder-button">Open Folder</button>
-    <span class="folder-name" *ngIf="selectedFolder">{{ selectedFolder.handle.name }}</span>
-    <ng-container *ngIf="selectedFile">
-      <span class="separator">&gt;</span>
-      <span class="folder-name">{{ selectedFile.handle.name }}</span>
+    <ng-container *ngFor="let item of getPathElements(); let last = last">
+      <span class="folder-name">{{ item.handle.name }}</span>
+      <span class="separator" *ngIf="!last">&gt;</span>
     </ng-container>
   `,
   styleUrl: 'folder-selector.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FolderSelectorComponent {
   @Input() selectedFolder: FsItem<FileSystemDirectoryHandle> | null = null;
@@ -30,5 +30,13 @@ export class FolderSelectorComponent {
     } catch (e) {
       console.error('Error opening folder', e);
     }
+  }
+
+  getPathElements(): Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>> {
+    const fsItem = this.selectedFile || this.selectedFolder;
+    if (!fsItem) {
+      return [];
+    }
+    return fsItem.getFullPath();
   }
 }
