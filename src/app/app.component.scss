@@ -29,6 +29,7 @@
   grid-area: maincontent;
   display: flex;
   flex-flow: row nowrap;
+  overflow: hidden;
 }
 
 .side-panel {
@@ -38,4 +39,5 @@
   min-width: 10%;
   max-width: 30%;
   resize: horizontal;
+  height: 100%;
 }
