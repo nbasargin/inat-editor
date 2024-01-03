@@ -30,6 +30,7 @@ import { FsItem } from './fs-item';
         <ie-file-list
           [fileList]="folderContents"
           [selectedFile]="selectedFile"
+          [parentFolder]="selectedFolder ? selectedFolder.parent : null"
           (fileSelected)="setSelectedFile($event)"
           (folderSelected)="setSelectedFolder($event)"
           class="side-panel"

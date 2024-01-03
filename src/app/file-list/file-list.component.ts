@@ -15,6 +15,10 @@ interface FileListItem {
   imports: [CommonModule, MatIconModule, MatTooltipModule],
   providers: [{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: { disableTooltipInteractivity: true } }],
   template: `
+    <div *ngIf="parentFolder" class="folder-entry" (click)="clickListItem(parentFolder)">
+      <mat-icon [fontIcon]="'drive_file_move_rtl'" class="entry-icon"></mat-icon>
+      <span class="entry-name">..</span>
+    </div>
     <div
       *ngFor="let listItem of fileListItems"
       class="folder-entry"
@@ -41,6 +45,7 @@ export class FileListComponent {
     this.fileListItems = list.map((file) => this.fsItemToListItem(file));
   }
   @Input() selectedFile: FsItem<FileSystemFileHandle> | null = null;
+  @Input() parentFolder: FsItem<FileSystemDirectoryHandle> | null = null;
 
   @Output() folderSelected = new EventEmitter<FsItem<FileSystemDirectoryHandle>>();
   @Output() fileSelected = new EventEmitter<FsItem<FileSystemFileHandle>>();
