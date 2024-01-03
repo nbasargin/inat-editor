@@ -2,11 +2,13 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
+import { FsItem } from '../file-list-item';
 
 interface FileListItem {
-  fsHandle: FileSystemDirectoryHandle | FileSystemFileHandle;
+  fsItem: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>;
   icon: string;
 }
+
 @Component({
   selector: 'ie-file-list',
   standalone: true,
@@ -16,12 +18,12 @@ interface FileListItem {
     <div
       *ngFor="let listItem of fileListItems"
       class="folder-entry"
-      [class.selected]="listItem.fsHandle === selectedFile"
-      (click)="clickListItem(listItem.fsHandle)"
+      [class.selected]="selectedFile && listItem.fsItem.handle === selectedFile.handle"
+      (click)="clickListItem(listItem.fsItem)"
     >
       <mat-icon [fontIcon]="listItem.icon" class="entry-icon"></mat-icon>
-      <span class="entry-name" [matTooltip]="listItem.fsHandle.name" [matTooltipShowDelay]="200">{{
-        listItem.fsHandle.name
+      <span class="entry-name" [matTooltip]="listItem.fsItem.handle.name" [matTooltipShowDelay]="200">{{
+        listItem.fsItem.handle.name
       }}</span>
     </div>
     <div *ngIf="fileListItems.length === 0" class="folder-entry empty-list-message">
@@ -35,27 +37,27 @@ interface FileListItem {
 export class FileListComponent {
   fileListItems: Array<FileListItem> = [];
 
-  @Input() set fileList(list: Array<FileSystemDirectoryHandle | FileSystemFileHandle>) {
-    this.fileListItems = list.map((file) => this.fsHandleToListItem(file));
+  @Input() set fileList(list: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>>) {
+    this.fileListItems = list.map((file) => this.fsItemToListItem(file));
   }
-  @Input() selectedFile: FileSystemFileHandle | undefined = undefined;
+  @Input() selectedFile: FsItem<FileSystemFileHandle> | null = null;
 
-  @Output() folderSelected = new EventEmitter<FileSystemDirectoryHandle | undefined>();
-  @Output() fileSelected = new EventEmitter<FileSystemFileHandle | undefined>();
+  @Output() folderSelected = new EventEmitter<FsItem<FileSystemDirectoryHandle>>();
+  @Output() fileSelected = new EventEmitter<FsItem<FileSystemFileHandle>>();
 
-  private fsHandleToListItem(fsHandle: FileSystemDirectoryHandle | FileSystemFileHandle): FileListItem {
-    const icon = fsHandle.kind === 'directory' ? 'folder' : 'insert_drive_file';
+  private fsItemToListItem(fsItem: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>): FileListItem {
+    const icon = fsItem.handle.kind === 'directory' ? 'folder' : 'insert_drive_file';
     return {
-      fsHandle: fsHandle,
+      fsItem: fsItem,
       icon: icon,
     };
   }
 
-  clickListItem(file: FileSystemDirectoryHandle | FileSystemFileHandle) {
-    if (file instanceof FileSystemFileHandle) {
-      this.fileSelected.emit(file);
-    } else {
-      console.log('Folder click');
+  clickListItem(fsItem: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>) {
+    if (fsItem.handle instanceof FileSystemFileHandle) {
+      this.fileSelected.emit(fsItem as FsItem<FileSystemFileHandle>);
+    } else if (fsItem.handle instanceof FileSystemDirectoryHandle) {
+      this.folderSelected.emit(fsItem as FsItem<FileSystemDirectoryHandle>);
     }
   }
 }

@@ -5,6 +5,8 @@ import { FileAccessNotSupportedComponent } from './file-access-not-supported/fil
 import { FolderSelectorComponent } from './folder-selector/folder-selector.component';
 import { ImageEditorComponent } from './image-editor/image-editor.component';
 
+import { FsItem } from './file-list-item';
+
 @Component({
   selector: 'ie-root',
   standalone: true,
@@ -29,6 +31,7 @@ import { ImageEditorComponent } from './image-editor/image-editor.component';
           [fileList]="folderContents"
           [selectedFile]="selectedFile"
           (fileSelected)="setSelectedFile($event)"
+          (folderSelected)="setSelectedFolder($event)"
           class="side-panel"
         ></ie-file-list>
         <ie-image-editor></ie-image-editor>
@@ -39,29 +42,25 @@ import { ImageEditorComponent } from './image-editor/image-editor.component';
 })
 export class AppComponent {
   fileApiSupported: boolean;
-  selectedFolder: FileSystemDirectoryHandle | undefined = undefined;
-  selectedFile: FileSystemFileHandle | undefined = undefined;
-  folderContents: Array<FileSystemDirectoryHandle | FileSystemFileHandle> = [];
+  selectedFolder: FsItem<FileSystemDirectoryHandle> | null = null;
+  selectedFile: FsItem<FileSystemFileHandle> | null = null;
+  folderContents: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>> = [];
 
   constructor() {
     this.fileApiSupported = !!window.showOpenFilePicker;
   }
 
-  async setSelectedFolder(selectedFolder: FileSystemDirectoryHandle | undefined) {
+  async setSelectedFolder(selectedFolder: FsItem<FileSystemDirectoryHandle>) {
     this.selectedFolder = selectedFolder;
-    if (!selectedFolder) {
-      this.folderContents = []; // no files
-      return;
-    }
-
-    const folderContents: Array<FileSystemDirectoryHandle | FileSystemFileHandle> = [];
-    for await (const entry of selectedFolder.values()) {
-      folderContents.push(entry);
+    this.selectedFile = null;
+    const folderContents: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>> = [];
+    for await (const entry of selectedFolder.handle.values()) {
+      folderContents.push({ handle: entry, parent: selectedFolder });
     }
     this.folderContents = folderContents;
   }
 
-  setSelectedFile(selectedFile: FileSystemFileHandle | undefined) {
+  setSelectedFile(selectedFile: FsItem<FileSystemFileHandle>) {
     this.selectedFile = selectedFile;
   }
 }
