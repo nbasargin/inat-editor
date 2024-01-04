@@ -8,9 +8,11 @@ import { FsItem } from '../fs-item';
   standalone: true,
   imports: [MatButtonModule, CommonModule],
   template: `
-    <button mat-raised-button color="primary" (click)="selectFolder()" class="open-folder-button">Open Folder</button>
+    <button mat-raised-button color="primary" (click)="selectNewFolder()" class="open-folder-button">
+      Open Folder
+    </button>
     <ng-container *ngFor="let item of getPathElements(); let last = last">
-      <span class="folder-name">{{ item.handle.name }}</span>
+      <span class="folder-name" (click)="clickExistingPathItem(item)">{{ item.handle.name }}</span>
       <span class="separator" *ngIf="!last">&gt;</span>
     </ng-container>
   `,
@@ -23,12 +25,18 @@ export class FolderSelectorComponent {
 
   @Output() folderSelected = new EventEmitter<FsItem<FileSystemDirectoryHandle>>();
 
-  async selectFolder() {
+  async selectNewFolder() {
     try {
       const selectedFolder = await window.showDirectoryPicker();
       this.folderSelected.emit(new FsItem<FileSystemDirectoryHandle>(selectedFolder, null));
     } catch (e) {
       console.error('Error opening folder', e);
+    }
+  }
+
+  clickExistingPathItem(item: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>) {
+    if (item.handle instanceof FileSystemDirectoryHandle) {
+      this.folderSelected.emit(item as FsItem<FileSystemDirectoryHandle>);
     }
   }
 

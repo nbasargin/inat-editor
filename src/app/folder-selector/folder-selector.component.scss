@@ -4,7 +4,7 @@
   flex-flow: row nowrap;
   align-items: baseline;
   padding: 4px;
-  gap: 8px;
+  gap: 4px;
   overflow: hidden;
 }
 
@@ -15,9 +15,17 @@
 .folder-name {
   font-weight: 500;
   white-space: nowrap;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: #eee;
+  }
 
   &:last-child {
     overflow: hidden;
     text-overflow: ellipsis;
+    pointer-events: none;
   }
 }
