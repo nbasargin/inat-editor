@@ -74,6 +74,7 @@ export class AppComponent {
     ) {
       return;
     }
+    event.preventDefault();
     const availableFiles = this.filterImageFiles(this.folderContents);
     const selectedIndex = availableFiles.indexOf(this.selectedFile);
     if (selectedIndex === -1) {
