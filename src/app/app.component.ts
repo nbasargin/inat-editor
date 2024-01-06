@@ -35,7 +35,7 @@ import { FsItem } from './fs-item';
           (folderSelected)="setSelectedFolder($event)"
           class="side-panel"
         ></ie-file-list>
-        <ie-image-editor></ie-image-editor>
+        <ie-image-editor [selectedFile]="selectedFile"></ie-image-editor>
       </div>
     </div>
   `,
