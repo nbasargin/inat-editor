@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FileListComponent } from './file-list/file-list.component';
 import { FileAccessNotSupportedComponent } from './file-access-not-supported/file-access-not-supported.component';
@@ -63,5 +63,39 @@ export class AppComponent {
 
   setSelectedFile(selectedFile: FsItem<FileSystemFileHandle>) {
     this.selectedFile = selectedFile;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if (
+      !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) ||
+      !this.selectedFolder ||
+      !this.selectedFile
+    ) {
+      return;
+    }
+    const availableFiles = this.filterImageFiles(this.folderContents);
+    const selectedIndex = availableFiles.indexOf(this.selectedFile);
+    if (selectedIndex === -1) {
+      return;
+    }
+    if ((event.key === 'ArrowLeft' || event.key == 'ArrowUp') && selectedIndex > 0) {
+      this.setSelectedFile(availableFiles[selectedIndex - 1]);
+    }
+    if ((event.key === 'ArrowRight' || event.key == 'ArrowDown') && selectedIndex < availableFiles.length - 1) {
+      this.setSelectedFile(availableFiles[selectedIndex + 1]);
+    }
+  }
+
+  private filterImageFiles(
+    items: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>>,
+  ): Array<FsItem<FileSystemFileHandle>> {
+    const filterFn = (item: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>) => {
+      const isFile = item.handle instanceof FileSystemFileHandle;
+      const name = item.handle.name.toLowerCase();
+      const isImage = name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
+      return isFile && isImage;
+    };
+    return items.filter(filterFn) as Array<FsItem<FileSystemFileHandle>>;
   }
 }
