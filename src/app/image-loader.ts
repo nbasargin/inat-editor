@@ -18,7 +18,6 @@ export class ImageLoader {
         return null;
       }
       this.objectURL = URL.createObjectURL(file);
-      console.log('created object url', this.objectURL);
       return this.objectURL;
     });
   }
@@ -26,7 +25,6 @@ export class ImageLoader {
   destroy() {
     this.destroyed = true;
     if (this.objectURL) {
-      console.log('destroying object url', this.objectURL);
       URL.revokeObjectURL(this.objectURL);
       this.objectURL = null;
     }
