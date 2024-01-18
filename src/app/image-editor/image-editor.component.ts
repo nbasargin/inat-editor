@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FsItem } from '../fs-item';
 import { ImageLoader2 } from '../image-loader-2';
@@ -15,34 +15,45 @@ import * as piexifjs from 'piexifjs';
   styleUrl: 'image-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ImageEditorComponent {
+export class ImageEditorComponent implements OnInit, OnDestroy {
   imageLoader: ImageLoader2 | null = null;
-  imgElement: Promise<HTMLImageElement> | null = null;
+  currentImage: HTMLImageElement | null = null;
+  resizeObserver = new ResizeObserver((entries) => {
+    this.resizeCanvasIfNeeded();
+    if (this.currentImage) {
+      this.redrawImage(this.currentImage);
+    }
+  });
 
   @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('overlayCanvas', { static: true }) overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   @Input() set selectedFile(fsItem: FsItem<FileSystemFileHandle> | null) {
-    if (this.imageLoader) {
-      this.imageLoader = null;
-    }
-    this.clearCanvas();
     if (!fsItem) {
+      this.imageLoader = null;
+      this.clearCanvas();
       return;
     }
-    this.imageLoader = new ImageLoader2(fsItem.handle);
-
-    const imgElement = this.asyncDataUrlToImage(this.imageLoader.asyncDataURL);
-    this.imgElement = imgElement;
-    this.imgElement.then((img) => {
-      if (this.imgElement != imgElement) {
+    const imageLoader = new ImageLoader2(fsItem.handle);
+    this.imageLoader = imageLoader;
+    this.asyncDataUrlToImage(this.imageLoader.asyncDataURL).then((img) => {
+      if (this.imageLoader != imageLoader) {
         return; // image already changed
       }
+      this.currentImage = img;
       this.resizeCanvasIfNeeded();
       this.redrawImage(img);
     });
 
     // this.testExif();
+  }
+
+  ngOnInit(): void {
+    this.resizeObserver.observe(this.imageCanvasRef.nativeElement);
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver.disconnect();
   }
 
   async asyncDataUrlToImage(asyncDataURL: Promise<string | null>): Promise<HTMLImageElement> {
