@@ -19,13 +19,14 @@ export class ImageEditorComponent {
   imageLoader: ImageLoader2 | null = null;
   imgElement: Promise<HTMLImageElement> | null = null;
 
-  @ViewChild('imageCanvas') imageCanvasRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('overlayCanvas') overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('imageCanvas') imageCanvasRef!: ElementRef<HTMLCanvasElement> | undefined;
+  @ViewChild('overlayCanvas') overlayCanvasRef!: ElementRef<HTMLCanvasElement> | undefined;
 
   @Input() set selectedFile(fsItem: FsItem<FileSystemFileHandle> | null) {
     if (this.imageLoader) {
       this.imageLoader = null;
     }
+    this.clearCanvas();
     if (!fsItem) {
       return;
     }
@@ -59,6 +60,9 @@ export class ImageEditorComponent {
   }
 
   resizeCanvasIfNeeded() {
+    if (!this.imageCanvasRef || !this.overlayCanvasRef) {
+      return;
+    }
     const canvas = this.imageCanvasRef.nativeElement;
     const overlay = this.overlayCanvasRef.nativeElement;
     const { width, height } = canvas.getBoundingClientRect();
@@ -72,13 +76,25 @@ export class ImageEditorComponent {
     }
   }
 
-  redrawImage(img: HTMLImageElement) {
-    const canvas = this.imageCanvasRef.nativeElement;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('canvas context is null!');
+  getCanvasAndContext() {
+    const canvas = this.imageCanvasRef?.nativeElement || null;
+    const ctx = canvas?.getContext('2d') || null;
+    return { canvas, ctx };
+  }
+
+  clearCanvas() {
+    const { canvas, ctx } = this.getCanvasAndContext();
+    if (!canvas || !ctx) {
+      return;
     }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  redrawImage(img: HTMLImageElement) {
+    const { canvas, ctx } = this.getCanvasAndContext();
+    if (!canvas || !ctx) {
+      return;
+    }
     // compute image area
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage(
       img.width,
@@ -86,6 +102,7 @@ export class ImageEditorComponent {
       canvas.width,
       canvas.height,
     );
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight);
   }
 
