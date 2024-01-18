@@ -88,8 +88,7 @@ export class ImageEditorComponent {
   private fitImage(imgWidth: number, imgHeight: number, canvasWidth: number, canvasHeight: number) {
     const hRatio = canvasWidth / imgWidth;
     const vRatio = canvasHeight / imgHeight;
-    const scalingFactor = Math.min(hRatio, vRatio); // do not scale up image if it is smaller than canvas
-    console.log(scalingFactor);
+    const scalingFactor = Math.min(hRatio, vRatio, 1); // do not scale up image if it is smaller than canvas
     const scaledImgWidth = Math.floor(imgWidth * scalingFactor);
     const scaledImgHeight = Math.floor(imgHeight * scalingFactor);
     const canvasLeft = Math.floor((canvasWidth - scaledImgWidth) / 2);
