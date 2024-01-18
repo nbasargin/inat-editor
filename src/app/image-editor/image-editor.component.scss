@@ -1,12 +1,12 @@
 :host {
-  padding: 8px;
+  margin: 8px;
   width: 100%;
   height: 100%;
   position: relative;
 }
 
 .image-canvas {
-  position: relative;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -14,7 +14,7 @@
 }
 
 .overlay-canvas {
-  position: relative;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
