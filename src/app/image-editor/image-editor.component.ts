@@ -10,7 +10,16 @@ import * as piexifjs from 'piexifjs';
   imports: [CommonModule],
   template: `
     <canvas #imageCanvas class="image-canvas"></canvas>
-    <canvas #overlayCanvas class="overlay-canvas"></canvas>
+    <canvas
+      #overlayCanvas
+      class="overlay-canvas"
+      (mousemove)="mouseMove($event)"
+      (dragstart)="dragStart($event)"
+      (drag)="drag($event)"
+      (dragend)="dragEnd($event)"
+      (dragover)="dragOver($event)"
+      draggable="true"
+    ></canvas>
   `,
   styleUrl: 'image-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,6 +37,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('overlayCanvas', { static: true }) overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
 
+  // later: refactor to an input that accepts an image or null, not a file handle
+  // file handling should happen outside
   @Input() set selectedFile(fsItem: FsItem<FileSystemFileHandle> | null) {
     if (!fsItem) {
       this.imageLoader = null;
@@ -54,6 +65,35 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.resizeObserver.disconnect();
+  }
+
+  mouseMove(e: MouseEvent) {
+    if (!this.currentImage) {
+      return;
+    }
+
+    const { overlay, overlayCtx: ctx } = this.getOverlayAndContext();
+    const { overlayPixelX, overlayPixelY } = this.clientCoordsToOverlayCoords(e.clientX, e.clientY);
+    this.clearOverlay();
+
+    this.drawDashedLine(ctx, 0, overlayPixelY, overlay.width, overlayPixelY);
+    this.drawDashedLine(ctx, overlayPixelX, 0, overlayPixelX, overlay.height);
+  }
+
+  dragStart(e: DragEvent) {
+    //console.log('drag start', e);
+  }
+
+  drag(e: DragEvent) {
+    //console.log('drag', e);
+  }
+
+  dragEnd(e: DragEvent) {
+    //console.log('drag end', e);
+  }
+
+  dragOver(e: DragEvent) {
+    //console.log('drag over', e);
   }
 
   async asyncDataUrlToImage(asyncDataURL: Promise<string | null>): Promise<HTMLImageElement> {
@@ -87,15 +127,34 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  clientCoordsToOverlayCoords(clientX: number, clientY: number) {
+    const overlay = this.overlayCanvasRef.nativeElement;
+    const { x, y } = overlay.getBoundingClientRect();
+    const overlayPixelX = (clientX - x) * devicePixelRatio;
+    const overlayPixelY = (clientY - y) * devicePixelRatio;
+    return { overlayPixelX, overlayPixelY };
+  }
+
   getCanvasAndContext() {
     const canvas = this.imageCanvasRef.nativeElement;
     const ctx = canvas?.getContext('2d') as CanvasRenderingContext2D; // should never be null in this case
     return { canvas, ctx };
   }
 
+  getOverlayAndContext() {
+    const overlay = this.overlayCanvasRef.nativeElement;
+    const overlayCtx = overlay?.getContext('2d') as CanvasRenderingContext2D; // should never be null in this case
+    return { overlay, overlayCtx };
+  }
+
   clearCanvas() {
     const { canvas, ctx } = this.getCanvasAndContext();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  clearOverlay() {
+    const { overlay, overlayCtx } = this.getOverlayAndContext();
+    overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
   }
 
   redrawImage(img: HTMLImageElement) {
@@ -109,6 +168,21 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     );
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight);
+  }
+
+  drawDashedLine(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number) {
+    ctx.strokeStyle = 'white';
+    ctx.setLineDash([]); // solid
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+    ctx.strokeStyle = 'black';
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
   }
 
   private fitImage(imgWidth: number, imgHeight: number, canvasWidth: number, canvasHeight: number) {
