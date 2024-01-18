@@ -19,8 +19,8 @@ export class ImageEditorComponent {
   imageLoader: ImageLoader2 | null = null;
   imgElement: Promise<HTMLImageElement> | null = null;
 
-  @ViewChild('imageCanvas') imageCanvasRef!: ElementRef<HTMLCanvasElement> | undefined;
-  @ViewChild('overlayCanvas') overlayCanvasRef!: ElementRef<HTMLCanvasElement> | undefined;
+  @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('overlayCanvas', { static: true }) overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   @Input() set selectedFile(fsItem: FsItem<FileSystemFileHandle> | null) {
     if (this.imageLoader) {
@@ -77,24 +77,18 @@ export class ImageEditorComponent {
   }
 
   getCanvasAndContext() {
-    const canvas = this.imageCanvasRef?.nativeElement || null;
-    const ctx = canvas?.getContext('2d') || null;
+    const canvas = this.imageCanvasRef.nativeElement;
+    const ctx = canvas?.getContext('2d') as CanvasRenderingContext2D; // should never be null in this case
     return { canvas, ctx };
   }
 
   clearCanvas() {
     const { canvas, ctx } = this.getCanvasAndContext();
-    if (!canvas || !ctx) {
-      return;
-    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
   redrawImage(img: HTMLImageElement) {
     const { canvas, ctx } = this.getCanvasAndContext();
-    if (!canvas || !ctx) {
-      return;
-    }
     // compute image area
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage(
       img.width,
