@@ -1,13 +1,22 @@
 :host {
-  display: flex;
   padding: 8px;
   width: 100%;
   height: 100%;
-  align-items: center;
-  justify-content: center;
+  position: relative;
 }
 
-.main-image {
-  max-width: 100%;
-  max-height: 100%;
+.image-canvas {
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.overlay-canvas {
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }

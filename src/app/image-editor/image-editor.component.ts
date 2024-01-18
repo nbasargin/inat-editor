@@ -8,12 +8,19 @@ import * as piexifjs from 'piexifjs';
   selector: 'ie-image-editor',
   standalone: true,
   imports: [CommonModule],
-  template: ` <img *ngIf="imageLoader" class="main-image" [src]="imageLoader.asyncDataURL | async" /> `,
+  template: `
+    <canvas #imageCanvas class="image-canvas"></canvas>
+    <canvas #overlayCanvas class="overlay-canvas"></canvas>
+  `,
   styleUrl: 'image-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImageEditorComponent {
   imageLoader: ImageLoader2 | null = null;
+  imgElement: Promise<HTMLImageElement> | null = null;
+
+  @ViewChild('imageCanvas') imageCanvasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('overlayCanvas') overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   @Input() set selectedFile(fsItem: FsItem<FileSystemFileHandle> | null) {
     if (this.imageLoader) {
@@ -23,7 +30,76 @@ export class ImageEditorComponent {
       return;
     }
     this.imageLoader = new ImageLoader2(fsItem.handle);
-    this.testExif();
+
+    this.imgElement = this.asyncDataUrlToImage(this.imageLoader.asyncDataURL);
+    this.imgElement.then((img) => {
+      this.resizeCanvasIfNeeded();
+      this.redrawImage(img);
+    });
+
+    // this.testExif();
+  }
+
+  async asyncDataUrlToImage(asyncDataURL: Promise<string | null>): Promise<HTMLImageElement> {
+    const dataUrl = await asyncDataURL;
+    return new Promise((resolve, reject) => {
+      if (!dataUrl) {
+        reject();
+      } else {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject();
+        img.src = dataUrl;
+      }
+    });
+  }
+
+  resizeCanvasIfNeeded() {
+    const canvas = this.imageCanvasRef.nativeElement;
+    const overlay = this.overlayCanvasRef.nativeElement;
+    const { width, height } = canvas.getBoundingClientRect();
+    const canvasWidth = Math.floor(width * devicePixelRatio);
+    const canvasHeight = Math.floor(height * devicePixelRatio);
+    if (canvasWidth !== canvas.width || canvasHeight !== canvas.height) {
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      overlay.width = canvasWidth;
+      overlay.height = canvasHeight;
+    }
+  }
+
+  redrawImage(img: HTMLImageElement) {
+    const canvas = this.imageCanvasRef.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('canvas context is null!');
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // compute image area
+    const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage(
+      img.width,
+      img.height,
+      canvas.width,
+      canvas.height,
+    );
+    ctx.drawImage(img, canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight);
+  }
+
+  private fitImage(imgWidth: number, imgHeight: number, canvasWidth: number, canvasHeight: number) {
+    const hRatio = canvasWidth / imgWidth;
+    const vRatio = canvasHeight / imgHeight;
+    const scalingFactor = Math.min(hRatio, vRatio); // do not scale up image if it is smaller than canvas
+    console.log(scalingFactor);
+    const scaledImgWidth = Math.floor(imgWidth * scalingFactor);
+    const scaledImgHeight = Math.floor(imgHeight * scalingFactor);
+    const canvasLeft = Math.floor((canvasWidth - scaledImgWidth) / 2);
+    const canvasTop = Math.floor((canvasHeight - scaledImgHeight) / 2);
+    return {
+      canvasLeft,
+      canvasTop,
+      scaledImgWidth,
+      scaledImgHeight,
+    };
   }
 
   testExif() {
