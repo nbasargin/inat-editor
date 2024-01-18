@@ -9,17 +9,20 @@ import * as piexifjs from 'piexifjs';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <canvas #imageCanvas class="image-canvas"></canvas>
-    <canvas
-      #overlayCanvas
-      class="overlay-canvas"
-      (mousemove)="mouseMove($event)"
-      (dragstart)="dragStart($event)"
-      (drag)="drag($event)"
-      (dragend)="dragEnd($event)"
-      (dragover)="dragOver($event)"
-      draggable="true"
-    ></canvas>
+    <div class="canvas-area">
+      <canvas #imageCanvas class="image-canvas"></canvas>
+      <canvas
+        #overlayCanvas
+        class="overlay-canvas"
+        (mousemove)="mouseMove($event)"
+        (dragstart)="dragStart($event)"
+        (drag)="drag($event)"
+        (dragend)="dragEnd($event)"
+        (dragover)="dragOver($event)"
+        draggable="true"
+      ></canvas>
+      <div></div>
+    </div>
   `,
   styleUrl: 'image-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
