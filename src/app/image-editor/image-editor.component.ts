@@ -31,8 +31,12 @@ export class ImageEditorComponent {
     }
     this.imageLoader = new ImageLoader2(fsItem.handle);
 
-    this.imgElement = this.asyncDataUrlToImage(this.imageLoader.asyncDataURL);
+    const imgElement = this.asyncDataUrlToImage(this.imageLoader.asyncDataURL);
+    this.imgElement = imgElement;
     this.imgElement.then((img) => {
+      if (this.imgElement != imgElement) {
+        return; // image already changed
+      }
       this.resizeCanvasIfNeeded();
       this.redrawImage(img);
     });
