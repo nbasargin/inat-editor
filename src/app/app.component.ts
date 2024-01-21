@@ -6,6 +6,7 @@ import { FolderSelectorComponent } from './folder-selector/folder-selector.compo
 import { ImageEditorComponent } from './image-editor/image-editor.component';
 
 import { FsItem } from './fs-item';
+import { ImageXY } from './canvas-coordinates';
 
 @Component({
   selector: 'ie-root',
@@ -35,7 +36,10 @@ import { FsItem } from './fs-item';
           (folderSelected)="setSelectedFolder($event)"
           class="side-panel"
         ></ie-file-list>
-        <ie-image-editor [selectedFile]="selectedFile"></ie-image-editor>
+        <ie-image-editor
+          [selectedFile]="selectedFile"
+          (cropImageRegion)="cropImageRegion($event.img, $event.minXY, $event.maxXY)"
+        ></ie-image-editor>
       </div>
     </div>
   `,
@@ -63,6 +67,10 @@ export class AppComponent {
 
   setSelectedFile(selectedFile: FsItem<FileSystemFileHandle>) {
     this.selectedFile = selectedFile;
+  }
+
+  cropImageRegion(img: HTMLImageElement, minXY: ImageXY, maxXY: ImageXY) {
+    console.log(`minx ${minXY.imgX}, maxx ${maxXY.imgX}, miny ${minXY.imgY}, maxy ${maxXY.imgY}`);
   }
 
   @HostListener('document:keydown', ['$event'])

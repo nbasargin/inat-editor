@@ -1,5 +1,16 @@
-import { ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
 import { FsItem } from '../fs-item';
 import { ImageLoader2 } from '../image-loader-2';
 import { CanvasCoordinates, ClientXY, ImageXY } from '../canvas-coordinates';
@@ -9,7 +20,7 @@ import { ImageRegion } from '../image-region';
 @Component({
   selector: 'ie-image-editor',
   standalone: true,
-  imports: [CommonModule],
+  imports: [MatButtonModule, CommonModule],
   template: `
     <div class="canvas-area">
       <canvas #imageCanvas class="image-canvas"></canvas>
@@ -22,7 +33,12 @@ import { ImageRegion } from '../image-region';
         (mouseenter)="mouseEnter($event)"
         (mouseleave)="mouseLeave($event)"
       ></canvas>
-      <div></div>
+
+      <div class="button-container" *ngIf="selectedRegion.corner1 && selectedRegion.corner2">
+        <button mat-raised-button color="primary" (click)="cropImage(selectedRegion.corner1, selectedRegion.corner2)">
+          Crop Image
+        </button>
+      </div>
     </div>
   `,
   styleUrl: 'image-editor.component.scss',
@@ -50,6 +66,9 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   // later: refactor to an input that accepts an image or null, not a file handle
   // file handling should happen outside
   @Input() set selectedFile(fsItem: FsItem<FileSystemFileHandle> | null) {
+    this.selectedRegion = new ImageRegion();
+    const { overlay, overlayCtx } = this.getOverlayAndContext();
+    CanvasDraw.clearCanvas(overlayCtx, overlay);
     if (!fsItem) {
       this.imageLoader = null;
       const { canvas, ctx } = this.getCanvasAndContext();
@@ -68,6 +87,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       this.redrawImage(img, this.coordinates);
     });
   }
+
+  @Output() cropImageRegion = new EventEmitter<{ img: HTMLImageElement; minXY: ImageXY; maxXY: ImageXY }>();
 
   ngOnInit(): void {
     this.resizeObserver.observe(this.imageCanvasRef.nativeElement);
@@ -102,8 +123,17 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       return;
     }
     const imgC2 = this.getSecondCorner(this.coordinates, this.selectedRegion.corner1, e);
-    this.selectedRegion.corner2 = imgC2;
-    this.redrawSelectedRegionOutline(this.selectedRegion.corner1, imgC2, this.coordinates);
+    const imgBoxWidth = Math.abs(this.selectedRegion.corner1.imgX - imgC2.imgX);
+    if (imgBoxWidth > 5) {
+      // selected region valid, keep for later
+      this.selectedRegion.corner2 = imgC2;
+      this.redrawSelectedRegionOutline(this.selectedRegion.corner1, imgC2, this.coordinates);
+    } else {
+      // box too small
+      this.selectedRegion = new ImageRegion();
+      const { overlay, overlayCtx } = this.getOverlayAndContext();
+      CanvasDraw.clearCanvas(overlayCtx, overlay);
+    }
   }
 
   mouseEnter(e: MouseEvent) {
@@ -118,6 +148,20 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       const { overlay, overlayCtx } = this.getOverlayAndContext();
       CanvasDraw.clearCanvas(overlayCtx, overlay);
     }
+  }
+
+  cropImage(imgC1: ImageXY, imgC2: ImageXY) {
+    if (!this.currentImage) {
+      return;
+    }
+    const minX = Math.floor(Math.min(imgC1.imgX, imgC2.imgX));
+    const maxX = Math.ceil(Math.max(imgC1.imgX, imgC2.imgX));
+    const minY = Math.floor(Math.min(imgC1.imgY, imgC2.imgY));
+    const maxY = Math.ceil(Math.max(imgC1.imgY, imgC2.imgY));
+    const minXY = { imgX: minX, imgY: minY };
+    const maxXY = { imgX: maxX, imgY: maxY };
+    const img = this.currentImage;
+    this.cropImageRegion.next({ img, minXY, maxXY });
   }
 
   async asyncDataUrlToImage(asyncDataURL: Promise<string | null>): Promise<HTMLImageElement> {
