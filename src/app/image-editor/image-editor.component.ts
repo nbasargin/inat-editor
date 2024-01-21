@@ -16,6 +16,7 @@ import { ImageLoader2 } from '../image-loader-2';
 import { CanvasCoordinates, ClientXY, ImageXY } from '../canvas-coordinates';
 import { CanvasDraw } from '../canvas-draw';
 import { ImageRegion } from '../image-region';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'ie-image-editor',
@@ -39,6 +40,10 @@ import { ImageRegion } from '../image-region';
           Crop Image
         </button>
       </div>
+
+      <div class="info-container" *ngIf="infoMessage | async as msg">
+        {{ msg }}
+      </div>
     </div>
   `,
   styleUrl: 'image-editor.component.scss',
@@ -59,6 +64,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   });
 
   selectedRegion = new ImageRegion();
+  infoMessage = new Subject<string>();
 
   @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('overlayCanvas', { static: true }) overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
@@ -111,11 +117,25 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   mouseMove(e: MouseEvent) {
-    if (!this.currentImage || !this.coordinates || !this.selectedRegion.corner1 || this.selectedRegion.corner2) {
+    if (!this.currentImage || !this.coordinates) {
       return;
     }
-    const imgC2 = this.getSecondCorner(this.coordinates, this.selectedRegion.corner1, e);
+    const canvasCoord = this.coordinates.clientToCanvas(e);
+    const imgCoord = this.coordinates.canvasToImage(canvasCoord);
+
+    if (!this.selectedRegion.corner1 || this.selectedRegion.corner2) {
+      const withinImage = this.coordinates.clipImageCoords(imgCoord);
+      this.infoMessage.next(`X ${withinImage.imgX}; Y ${withinImage.imgY}`);
+      return;
+    }
+
+    const imgC1 = this.selectedRegion.corner1;
+    const imgC2 = this.coordinates.constrainSecondCorner(imgC1, imgCoord);
     this.redrawSelectedRegionOutline(this.selectedRegion.corner1, imgC2, this.coordinates);
+
+    const width = Math.abs(imgC2.imgX - imgC1.imgX);
+    const height = Math.abs(imgC2.imgY - imgC1.imgY);
+    this.infoMessage.next(`W ${width}; H ${height}`);
   }
 
   mouseUp(e: MouseEvent) {
@@ -148,16 +168,17 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       const { overlay, overlayCtx } = this.getOverlayAndContext();
       CanvasDraw.clearCanvas(overlayCtx, overlay);
     }
+    this.infoMessage.next('');
   }
 
   cropImage(imgC1: ImageXY, imgC2: ImageXY) {
     if (!this.currentImage) {
       return;
     }
-    const minX = Math.floor(Math.min(imgC1.imgX, imgC2.imgX));
-    const maxX = Math.ceil(Math.max(imgC1.imgX, imgC2.imgX));
-    const minY = Math.floor(Math.min(imgC1.imgY, imgC2.imgY));
-    const maxY = Math.ceil(Math.max(imgC1.imgY, imgC2.imgY));
+    const minX = Math.min(imgC1.imgX, imgC2.imgX);
+    const maxX = Math.max(imgC1.imgX, imgC2.imgX);
+    const minY = Math.min(imgC1.imgY, imgC2.imgY);
+    const maxY = Math.max(imgC1.imgY, imgC2.imgY);
     const minXY = { imgX: minX, imgY: minY };
     const maxXY = { imgX: maxX, imgY: maxY };
     const img = this.currentImage;

@@ -31,8 +31,8 @@ export class CanvasCoordinates {
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage();
     const scalingFactorX = scaledImgWidth / this.img.width;
     const scalingFactorY = scaledImgHeight / this.img.height;
-    const imgX = (canvasX - canvasLeft) / scalingFactorX;
-    const imgY = (canvasY - canvasTop) / scalingFactorY;
+    const imgX = Math.round((canvasX - canvasLeft) / scalingFactorX);
+    const imgY = Math.round((canvasY - canvasTop) / scalingFactorY);
     return { imgX, imgY };
   }
 

@@ -37,3 +37,15 @@
   background: white;
   @include mat.elevation(2);
 }
+
+.info-container {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 8px;
+  border-radius: 4px;
+  background: white;
+  pointer-events: none;
+  opacity: 0.5;
+  @include mat.elevation(2);
+}
