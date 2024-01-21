@@ -36,6 +36,9 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.resizeCanvasIfNeeded();
     if (this.currentImage && this.coordinates) {
       this.redrawImage(this.currentImage, this.coordinates);
+      if (this.selectedRegion.corner1 && this.selectedRegion.corner2) {
+        this.redrawSelectedRegionOutline(this.selectedRegion.corner1, this.selectedRegion.corner2, this.coordinates);
+      }
     }
   });
 
@@ -90,23 +93,17 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     if (!this.currentImage || !this.coordinates || !this.selectedRegion.corner1 || this.selectedRegion.corner2) {
       return;
     }
-    // select corner 2: the region with corners 1 and 2 is constrained to be square and within image
-    const { canvasC1, canvasC2 } = this.getSecondCorner(this.coordinates, this.selectedRegion.corner1, e);
-    const { overlay, overlayCtx: ctx } = this.getOverlayAndContext();
-    CanvasDraw.clearCanvas(ctx, overlay);
-    CanvasDraw.drawDashedBox(ctx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
+    const imgC2 = this.getSecondCorner(this.coordinates, this.selectedRegion.corner1, e);
+    this.redrawSelectedRegionOutline(this.selectedRegion.corner1, imgC2, this.coordinates);
   }
 
   mouseUp(e: MouseEvent) {
     if (!this.currentImage || !this.coordinates || !this.selectedRegion.corner1) {
       return;
     }
-    const { imgC2, canvasC1, canvasC2 } = this.getSecondCorner(this.coordinates, this.selectedRegion.corner1, e);
-    const { overlay, overlayCtx: ctx } = this.getOverlayAndContext();
-    CanvasDraw.clearCanvas(ctx, overlay);
-    CanvasDraw.drawDashedBox(ctx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
+    const imgC2 = this.getSecondCorner(this.coordinates, this.selectedRegion.corner1, e);
     this.selectedRegion.corner2 = imgC2;
-    console.log('region defined', this.selectedRegion);
+    this.redrawSelectedRegionOutline(this.selectedRegion.corner1, imgC2, this.coordinates);
   }
 
   mouseEnter(e: MouseEvent) {
@@ -169,16 +166,22 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   redrawImage(img: HTMLImageElement, coordinates: CanvasCoordinates) {
     const { canvas, ctx } = this.getCanvasAndContext();
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = coordinates.fitImage();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    CanvasDraw.clearCanvas(ctx, canvas);
     ctx.drawImage(img, canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight);
+  }
+
+  redrawSelectedRegionOutline(imgC1: ImageXY, imgC2: ImageXY, coordinates: CanvasCoordinates) {
+    const canvasC1 = coordinates.imageToCanvas(imgC1);
+    const canvasC2 = coordinates.imageToCanvas(imgC2);
+    const { overlay, overlayCtx } = this.getOverlayAndContext();
+    CanvasDraw.clearCanvas(overlayCtx, overlay);
+    CanvasDraw.drawDashedBox(overlayCtx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
   }
 
   getSecondCorner(coordinates: CanvasCoordinates, imgC1: ImageXY, clientXY: ClientXY) {
     const canvasCoord = coordinates.clientToCanvas(clientXY);
     const imgCoord = coordinates.canvasToImage(canvasCoord);
     const imgC2 = coordinates.constrainSecondCorner(imgC1, imgCoord);
-    const canvasC1 = coordinates.imageToCanvas(imgC1);
-    const canvasC2 = coordinates.imageToCanvas(imgC2);
-    return { imgC1, imgC2, canvasC1, canvasC2 };
+    return imgC2;
   }
 }
