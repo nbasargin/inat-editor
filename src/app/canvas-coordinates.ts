@@ -1,3 +1,13 @@
+export interface ClientXY {
+  clientX: number;
+  clientY: number;
+}
+
+export interface CanvasXY {
+  canvasX: number;
+  canvasY: number;
+}
+
 export interface ImageXY {
   imgX: number;
   imgY: number;
@@ -10,14 +20,14 @@ export class CanvasCoordinates {
     public canvasPadding: number = 16,
   ) {}
 
-  clientToCanvas(clientX: number, clientY: number) {
+  clientToCanvas({ clientX, clientY }: ClientXY) {
     const { x, y } = this.canvas.getBoundingClientRect();
     const canvasX = (clientX - x) * devicePixelRatio;
     const canvasY = (clientY - y) * devicePixelRatio;
     return { canvasX, canvasY };
   }
 
-  canvasToImage(canvasX: number, canvasY: number) {
+  canvasToImage({ canvasX, canvasY }: CanvasXY) {
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage();
     const scalingFactorX = scaledImgWidth / this.img.width;
     const scalingFactorY = scaledImgHeight / this.img.height;
@@ -27,7 +37,7 @@ export class CanvasCoordinates {
   }
 
   // allow values from 0 to width/height (including)
-  clipImageCoords(imgX: number, imgY: number): ImageXY {
+  clipImageCoords({ imgX, imgY }: ImageXY): ImageXY {
     imgX = Math.min(this.img.width, Math.max(0, imgX));
     imgY = Math.min(this.img.height, Math.max(0, imgY));
     return { imgX, imgY };
@@ -35,7 +45,7 @@ export class CanvasCoordinates {
 
   // inputs: corner1 within the image, anotherPoint any point (can be outside, in image coordinates)
   constrainSecondCorner(corner1: ImageXY, anotherPoint: ImageXY): ImageXY {
-    const clipImgEnd = this.clipImageCoords(anotherPoint.imgX, anotherPoint.imgY);
+    const clipImgEnd = this.clipImageCoords(anotherPoint);
     const width = clipImgEnd.imgX - corner1.imgX;
     const height = clipImgEnd.imgY - corner1.imgY;
     const maxSize = Math.min(Math.abs(width), Math.abs(height));
@@ -44,7 +54,7 @@ export class CanvasCoordinates {
     return { imgX: boxEndX, imgY: boxEndY };
   }
 
-  imageToCanvas(imgX: number, imgY: number) {
+  imageToCanvas({ imgX, imgY }: ImageXY) {
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage();
     const scalingFactorX = scaledImgWidth / this.img.width;
     const scalingFactorY = scaledImgHeight / this.img.height;

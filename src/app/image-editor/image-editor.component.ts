@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnIni
 import { CommonModule } from '@angular/common';
 import { FsItem } from '../fs-item';
 import { ImageLoader2 } from '../image-loader-2';
-import { CanvasCoordinates, ImageXY } from '../canvas-coordinates';
+import { CanvasCoordinates, ClientXY, ImageXY } from '../canvas-coordinates';
 import { CanvasDraw } from '../canvas-draw';
 import { ImageRegion } from '../image-region';
 
@@ -79,9 +79,9 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       return;
     }
     e.preventDefault();
-    const canvasCoord = this.coordinates.clientToCanvas(e.clientX, e.clientY);
-    const imgCoord = this.coordinates.canvasToImage(canvasCoord.canvasX, canvasCoord.canvasY);
-    const imgClipped = this.coordinates.clipImageCoords(imgCoord.imgX, imgCoord.imgY);
+    const canvasCoord = this.coordinates.clientToCanvas(e);
+    const imgCoord = this.coordinates.canvasToImage(canvasCoord);
+    const imgClipped = this.coordinates.clipImageCoords(imgCoord);
     this.selectedRegion = new ImageRegion();
     this.selectedRegion.corner1 = imgClipped;
   }
@@ -91,12 +91,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       return;
     }
     // select corner 2: the region with corners 1 and 2 is constrained to be square and within image
-    const { canvasC1, canvasC2 } = this.getSecondCorner(
-      this.coordinates,
-      this.selectedRegion.corner1,
-      e.clientX,
-      e.clientY,
-    );
+    const { canvasC1, canvasC2 } = this.getSecondCorner(this.coordinates, this.selectedRegion.corner1, e);
     const { overlay, overlayCtx: ctx } = this.getOverlayAndContext();
     CanvasDraw.clearCanvas(ctx, overlay);
     CanvasDraw.drawDashedBox(ctx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
@@ -106,12 +101,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     if (!this.currentImage || !this.coordinates || !this.selectedRegion.corner1) {
       return;
     }
-    const { imgC2, canvasC1, canvasC2 } = this.getSecondCorner(
-      this.coordinates,
-      this.selectedRegion.corner1,
-      e.clientX,
-      e.clientY,
-    );
+    const { imgC2, canvasC1, canvasC2 } = this.getSecondCorner(this.coordinates, this.selectedRegion.corner1, e);
     const { overlay, overlayCtx: ctx } = this.getOverlayAndContext();
     CanvasDraw.clearCanvas(ctx, overlay);
     CanvasDraw.drawDashedBox(ctx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
@@ -183,12 +173,12 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     ctx.drawImage(img, canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight);
   }
 
-  getSecondCorner(coordinates: CanvasCoordinates, imgC1: ImageXY, clientX: number, clientY: number) {
-    const canvasCoord = coordinates.clientToCanvas(clientX, clientY);
-    const imgCoord = coordinates.canvasToImage(canvasCoord.canvasX, canvasCoord.canvasY);
+  getSecondCorner(coordinates: CanvasCoordinates, imgC1: ImageXY, clientXY: ClientXY) {
+    const canvasCoord = coordinates.clientToCanvas(clientXY);
+    const imgCoord = coordinates.canvasToImage(canvasCoord);
     const imgC2 = coordinates.constrainSecondCorner(imgC1, imgCoord);
-    const canvasC1 = coordinates.imageToCanvas(imgC1.imgX, imgC1.imgY);
-    const canvasC2 = coordinates.imageToCanvas(imgC2.imgX, imgC2.imgY);
+    const canvasC1 = coordinates.imageToCanvas(imgC1);
+    const canvasC2 = coordinates.imageToCanvas(imgC2);
     return { imgC1, imgC2, canvasC1, canvasC2 };
   }
 }
