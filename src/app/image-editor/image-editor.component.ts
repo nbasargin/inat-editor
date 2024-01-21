@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import * as piexifjs from 'piexifjs';
 import { FsItem } from '../fs-item';
 import { ImageLoader2 } from '../image-loader-2';
 import { CanvasCoordinates } from '../canvas-coordinates';
+import { CanvasDraw } from '../canvas-draw';
 
 @Component({
   selector: 'ie-image-editor',
@@ -64,8 +64,6 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       this.resizeCanvasIfNeeded();
       this.redrawImage(img, this.coordinates);
     });
-
-    // this.testExif();
   }
 
   ngOnInit(): void {
@@ -98,14 +96,14 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const { overlay, overlayCtx } = this.getOverlayAndContext();
     const canvasCoord = this.coordinates.clientToCanvas(e.clientX, e.clientY);
     const imgCoord = this.coordinates.canvasToImage(canvasCoord.canvasX, canvasCoord.canvasY);
-    //this.drawCircle(overlayCtx, canvasClipped.canvasX, canvasClipped.canvasY, 5);
+    //CanvasDraw.drawCircle(overlayCtx, canvasClipped.canvasX, canvasClipped.canvasY, 5);
 
     if (!this.selectingRegion) {
       // point within image + two lines through it
       const imgClipped = this.coordinates.clipImageCoords(imgCoord.imgX, imgCoord.imgY);
       const canvasClipped = this.coordinates.imageToCanvas(imgClipped.imgX, imgClipped.imgY);
-      this.drawDashedLine(overlayCtx, 0, canvasClipped.canvasY, overlay.width, canvasClipped.canvasY);
-      this.drawDashedLine(overlayCtx, canvasClipped.canvasX, 0, canvasClipped.canvasX, overlay.height);
+      CanvasDraw.drawDashedLine(overlayCtx, 0, canvasClipped.canvasY, overlay.width, canvasClipped.canvasY);
+      CanvasDraw.drawDashedLine(overlayCtx, canvasClipped.canvasX, 0, canvasClipped.canvasX, overlay.height);
     } else {
       // box from starting point to the final point, constrained to be square and within image
       const boxEnd = this.coordinates.squareBoxWithinImage(
@@ -117,11 +115,35 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       const canvasStart = this.coordinates.imageToCanvas(this.startImgX, this.startImgY);
       const canvasEnd = this.coordinates.imageToCanvas(boxEnd.boxEndX, boxEnd.boxEndY);
       // lines from start to intermediate points
-      this.drawDashedLine(overlayCtx, canvasStart.canvasX, canvasStart.canvasY, canvasEnd.canvasX, canvasStart.canvasY);
-      this.drawDashedLine(overlayCtx, canvasStart.canvasX, canvasStart.canvasY, canvasStart.canvasX, canvasEnd.canvasY);
+      CanvasDraw.drawDashedLine(
+        overlayCtx,
+        canvasStart.canvasX,
+        canvasStart.canvasY,
+        canvasEnd.canvasX,
+        canvasStart.canvasY,
+      );
+      CanvasDraw.drawDashedLine(
+        overlayCtx,
+        canvasStart.canvasX,
+        canvasStart.canvasY,
+        canvasStart.canvasX,
+        canvasEnd.canvasY,
+      );
       // lines from end to intermediate points
-      this.drawDashedLine(overlayCtx, canvasEnd.canvasX, canvasEnd.canvasY, canvasStart.canvasX, canvasEnd.canvasY);
-      this.drawDashedLine(overlayCtx, canvasEnd.canvasX, canvasEnd.canvasY, canvasEnd.canvasX, canvasStart.canvasY);
+      CanvasDraw.drawDashedLine(
+        overlayCtx,
+        canvasEnd.canvasX,
+        canvasEnd.canvasY,
+        canvasStart.canvasX,
+        canvasEnd.canvasY,
+      );
+      CanvasDraw.drawDashedLine(
+        overlayCtx,
+        canvasEnd.canvasX,
+        canvasEnd.canvasY,
+        canvasEnd.canvasX,
+        canvasStart.canvasY,
+      );
     }
   }
 
@@ -199,55 +221,5 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = coordinates.fitImage();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight);
-  }
-
-  drawDashedLine(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number) {
-    ctx.strokeStyle = 'white';
-    ctx.setLineDash([]); // solid
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
-    ctx.strokeStyle = 'black';
-    ctx.setLineDash([5, 5]);
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
-  }
-
-  drawCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, fillStyle: string = 'red') {
-    ctx.fillStyle = fillStyle;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  testExif() {
-    if (!this.imageLoader) return;
-    this.imageLoader.asyncDataURL.then((jpegData) => {
-      if (!jpegData) return;
-      const exifObj = piexifjs.load(jpegData);
-      const exifBytes = piexifjs.dump(exifObj);
-      const jpegDataClean = piexifjs.remove(jpegData);
-      const newData = piexifjs.insert(exifBytes, jpegDataClean);
-      console.log('exifObj', exifObj);
-      console.log('jpegData', jpegData.length);
-      console.log('jpegDataClean', jpegDataClean.length);
-      console.log('newData', newData.length);
-
-      for (const ifd in exifObj) {
-        if (ifd == 'thumbnail') {
-          const thumbnailData = exifObj[ifd] === null ? 'null' : exifObj[ifd];
-          console.log(`- thumbnail: ${thumbnailData}`);
-        } else {
-          const ifdTyped = ifd as '0th' | 'Exif' | 'GPS' | 'Interop' | '1st';
-          console.log(`- ${ifd}`);
-          for (const tag in exifObj[ifdTyped]) {
-            console.log(`    - ${piexifjs.TAGS[ifdTyped][tag]['name']}: ${exifObj[ifdTyped][tag]}`);
-          }
-        }
-      }
-    });
   }
 }
