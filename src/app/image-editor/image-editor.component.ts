@@ -14,12 +14,9 @@ import * as piexifjs from 'piexifjs';
       <canvas
         #overlayCanvas
         class="overlay-canvas"
+        (mousedown)="mouseDown($event)"
         (mousemove)="mouseMove($event)"
-        (dragstart)="dragStart($event)"
-        (drag)="drag($event)"
-        (dragend)="dragEnd($event)"
-        (dragover)="dragOver($event)"
-        draggable="true"
+        (mouseup)="mouseUp($event)"
       ></canvas>
       <div></div>
     </div>
@@ -36,6 +33,10 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       this.redrawImage(this.currentImage);
     }
   });
+
+  selectingRegion = false;
+  startCanvasX = 0;
+  startCanvasY = 0;
 
   @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('overlayCanvas', { static: true }) overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
@@ -70,33 +71,43 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.resizeObserver.disconnect();
   }
 
+  mouseDown(e: MouseEvent) {
+    if (!this.currentImage) {
+      return;
+    }
+    e.preventDefault();
+    const { canvasX, canvasY } = this.clientToCanvas(e.clientX, e.clientY);
+    this.startCanvasX = canvasX;
+    this.startCanvasY = canvasY;
+    this.selectingRegion = true;
+  }
+
   mouseMove(e: MouseEvent) {
     if (!this.currentImage) {
       return;
     }
 
-    const { overlay, overlayCtx: ctx } = this.getOverlayAndContext();
-    const { overlayPixelX, overlayPixelY } = this.clientCoordsToOverlayCoords(e.clientX, e.clientY);
+    const { overlay, overlayCtx } = this.getOverlayAndContext();
+    const { canvasX, canvasY } = this.clientToCanvas(e.clientX, e.clientY);
     this.clearOverlay();
 
-    this.drawDashedLine(ctx, 0, overlayPixelY, overlay.width, overlayPixelY);
-    this.drawDashedLine(ctx, overlayPixelX, 0, overlayPixelX, overlay.height);
+    if (!this.selectingRegion) {
+      this.drawDashedLine(overlayCtx, 0, canvasY, overlay.width, canvasY);
+      this.drawDashedLine(overlayCtx, canvasX, 0, canvasX, overlay.height);
+    } else {
+      // lines from start to intermediate points
+      this.drawDashedLine(overlayCtx, this.startCanvasX, this.startCanvasY, canvasX, this.startCanvasY);
+      this.drawDashedLine(overlayCtx, this.startCanvasX, this.startCanvasY, this.startCanvasX, canvasY);
+      // lines from end to intermediate points
+      this.drawDashedLine(overlayCtx, canvasX, canvasY, this.startCanvasX, canvasY);
+      this.drawDashedLine(overlayCtx, canvasX, canvasY, canvasX, this.startCanvasY);
+    }
   }
 
-  dragStart(e: DragEvent) {
-    //console.log('drag start', e);
-  }
-
-  drag(e: DragEvent) {
-    //console.log('drag', e);
-  }
-
-  dragEnd(e: DragEvent) {
-    //console.log('drag end', e);
-  }
-
-  dragOver(e: DragEvent) {
-    //console.log('drag over', e);
+  mouseUp(e: Event) {
+    this.startCanvasX = 0;
+    this.startCanvasY = 0;
+    this.selectingRegion = false;
   }
 
   async asyncDataUrlToImage(asyncDataURL: Promise<string | null>): Promise<HTMLImageElement> {
@@ -130,12 +141,12 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  clientCoordsToOverlayCoords(clientX: number, clientY: number) {
+  clientToCanvas(clientX: number, clientY: number) {
     const overlay = this.overlayCanvasRef.nativeElement;
     const { x, y } = overlay.getBoundingClientRect();
-    const overlayPixelX = (clientX - x) * devicePixelRatio;
-    const overlayPixelY = (clientY - y) * devicePixelRatio;
-    return { overlayPixelX, overlayPixelY };
+    const canvasX = (clientX - x) * devicePixelRatio;
+    const canvasY = (clientY - y) * devicePixelRatio;
+    return { canvasX, canvasY };
   }
 
   getCanvasAndContext() {
