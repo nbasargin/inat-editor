@@ -18,6 +18,7 @@ import { CanvasCoordinates } from '../canvas-coordinates';
         (mousedown)="mouseDown($event)"
         (mousemove)="mouseMove($event)"
         (mouseup)="mouseUp($event)"
+        (mouseleave)="mouseLeave($event)"
       ></canvas>
       <div></div>
     </div>
@@ -96,11 +97,11 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const imgCoord = this.coordinates.canvasToImage(canvasX, canvasY);
     const imgClipped = this.coordinates.clipImageCoords(imgCoord.imgX, imgCoord.imgY);
     const canvasClipped = this.coordinates.imageToCanvas(imgClipped.imgX, imgClipped.imgY);
-    this.drawCircle(overlayCtx, canvasClipped.canvasX, canvasClipped.canvasY, 5);
+    //this.drawCircle(overlayCtx, canvasClipped.canvasX, canvasClipped.canvasY, 5);
 
     if (!this.selectingRegion) {
-      this.drawDashedLine(overlayCtx, 0, canvasY, overlay.width, canvasY);
-      this.drawDashedLine(overlayCtx, canvasX, 0, canvasX, overlay.height);
+      this.drawDashedLine(overlayCtx, 0, canvasClipped.canvasY, overlay.width, canvasClipped.canvasY);
+      this.drawDashedLine(overlayCtx, canvasClipped.canvasX, 0, canvasClipped.canvasX, overlay.height);
     } else {
       // lines from start to intermediate points
       this.drawDashedLine(overlayCtx, this.startCanvasX, this.startCanvasY, canvasX, this.startCanvasY);
@@ -111,10 +112,14 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  mouseUp(e: Event) {
+  mouseUp(e: MouseEvent) {
     this.startCanvasX = 0;
     this.startCanvasY = 0;
     this.selectingRegion = false;
+  }
+
+  mouseLeave(e: MouseEvent) {
+    this.clearOverlay();
   }
 
   async asyncDataUrlToImage(asyncDataURL: Promise<string | null>): Promise<HTMLImageElement> {
