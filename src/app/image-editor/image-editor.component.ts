@@ -18,6 +18,7 @@ import { CanvasCoordinates } from '../canvas-coordinates';
         (mousedown)="mouseDown($event)"
         (mousemove)="mouseMove($event)"
         (mouseup)="mouseUp($event)"
+        (mouseenter)="mouseEnter($event)"
         (mouseleave)="mouseLeave($event)"
       ></canvas>
       <div></div>
@@ -38,8 +39,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   });
 
   selectingRegion = false;
-  startCanvasX = 0;
-  startCanvasY = 0;
+  startImgX = -1;
+  startImgY = -1;
 
   @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('overlayCanvas', { static: true }) overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
@@ -80,9 +81,11 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       return;
     }
     e.preventDefault();
-    const { canvasX, canvasY } = this.coordinates.clientToCanvas(e.clientX, e.clientY);
-    this.startCanvasX = canvasX;
-    this.startCanvasY = canvasY;
+    const canvasCoord = this.coordinates.clientToCanvas(e.clientX, e.clientY);
+    const imgCoord = this.coordinates.canvasToImage(canvasCoord.canvasX, canvasCoord.canvasY);
+    const imgClipped = this.coordinates.clipImageCoords(imgCoord.imgX, imgCoord.imgY);
+    this.startImgX = imgClipped.imgX;
+    this.startImgY = imgClipped.imgY;
     this.selectingRegion = true;
   }
 
@@ -93,29 +96,45 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.clearOverlay();
 
     const { overlay, overlayCtx } = this.getOverlayAndContext();
-    const { canvasX, canvasY } = this.coordinates.clientToCanvas(e.clientX, e.clientY);
-    const imgCoord = this.coordinates.canvasToImage(canvasX, canvasY);
-    const imgClipped = this.coordinates.clipImageCoords(imgCoord.imgX, imgCoord.imgY);
-    const canvasClipped = this.coordinates.imageToCanvas(imgClipped.imgX, imgClipped.imgY);
+    const canvasCoord = this.coordinates.clientToCanvas(e.clientX, e.clientY);
+    const imgCoord = this.coordinates.canvasToImage(canvasCoord.canvasX, canvasCoord.canvasY);
     //this.drawCircle(overlayCtx, canvasClipped.canvasX, canvasClipped.canvasY, 5);
 
     if (!this.selectingRegion) {
+      // point within image + two lines through it
+      const imgClipped = this.coordinates.clipImageCoords(imgCoord.imgX, imgCoord.imgY);
+      const canvasClipped = this.coordinates.imageToCanvas(imgClipped.imgX, imgClipped.imgY);
       this.drawDashedLine(overlayCtx, 0, canvasClipped.canvasY, overlay.width, canvasClipped.canvasY);
       this.drawDashedLine(overlayCtx, canvasClipped.canvasX, 0, canvasClipped.canvasX, overlay.height);
     } else {
+      // box from starting point to the final point, constrained to be square and within image
+      const boxEnd = this.coordinates.squareBoxWithinImage(
+        this.startImgX,
+        this.startImgY,
+        imgCoord.imgX,
+        imgCoord.imgY,
+      );
+      const canvasStart = this.coordinates.imageToCanvas(this.startImgX, this.startImgY);
+      const canvasEnd = this.coordinates.imageToCanvas(boxEnd.boxEndX, boxEnd.boxEndY);
       // lines from start to intermediate points
-      this.drawDashedLine(overlayCtx, this.startCanvasX, this.startCanvasY, canvasX, this.startCanvasY);
-      this.drawDashedLine(overlayCtx, this.startCanvasX, this.startCanvasY, this.startCanvasX, canvasY);
+      this.drawDashedLine(overlayCtx, canvasStart.canvasX, canvasStart.canvasY, canvasEnd.canvasX, canvasStart.canvasY);
+      this.drawDashedLine(overlayCtx, canvasStart.canvasX, canvasStart.canvasY, canvasStart.canvasX, canvasEnd.canvasY);
       // lines from end to intermediate points
-      this.drawDashedLine(overlayCtx, canvasX, canvasY, this.startCanvasX, canvasY);
-      this.drawDashedLine(overlayCtx, canvasX, canvasY, canvasX, this.startCanvasY);
+      this.drawDashedLine(overlayCtx, canvasEnd.canvasX, canvasEnd.canvasY, canvasStart.canvasX, canvasEnd.canvasY);
+      this.drawDashedLine(overlayCtx, canvasEnd.canvasX, canvasEnd.canvasY, canvasEnd.canvasX, canvasStart.canvasY);
     }
   }
 
   mouseUp(e: MouseEvent) {
-    this.startCanvasX = 0;
-    this.startCanvasY = 0;
+    this.startImgX = -1;
+    this.startImgY = -1;
     this.selectingRegion = false;
+  }
+
+  mouseEnter(e: MouseEvent) {
+    if ((e.buttons & 1) !== 1) {
+      this.mouseUp(e); // primary button not pressed, trigger mouseup
+    }
   }
 
   mouseLeave(e: MouseEvent) {

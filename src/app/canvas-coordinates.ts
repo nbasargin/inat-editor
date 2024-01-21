@@ -28,6 +28,17 @@ export class CanvasCoordinates {
     return { imgX, imgY };
   }
 
+  // inputs: img start within the image, imgEnd can be outside
+  squareBoxWithinImage(imgStartX: number, imgStartY: number, imgEndX: number, imgEndY: number) {
+    const clipImgEnd = this.clipImageCoords(imgEndX, imgEndY);
+    const width = clipImgEnd.imgX - imgStartX;
+    const height = clipImgEnd.imgY - imgStartY;
+    const maxSize = Math.min(Math.abs(width), Math.abs(height));
+    const boxEndX = imgStartX + maxSize * Math.sign(width);
+    const boxEndY = imgStartY + maxSize * Math.sign(height);
+    return { boxEndX, boxEndY };
+  }
+
   imageToCanvas(imgX: number, imgY: number) {
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage();
     const scalingFactorX = scaledImgWidth / this.img.width;
