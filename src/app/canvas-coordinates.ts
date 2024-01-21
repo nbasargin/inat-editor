@@ -33,18 +33,8 @@ export class CanvasCoordinates {
     return { imgX, imgY };
   }
 
-  // inputs: img start within the image, imgEnd can be outside
-  squareBoxWithinImage(imgStartX: number, imgStartY: number, imgEndX: number, imgEndY: number) {
-    const clipImgEnd = this.clipImageCoords(imgEndX, imgEndY);
-    const width = clipImgEnd.imgX - imgStartX;
-    const height = clipImgEnd.imgY - imgStartY;
-    const maxSize = Math.min(Math.abs(width), Math.abs(height));
-    const boxEndX = imgStartX + maxSize * Math.sign(width);
-    const boxEndY = imgStartY + maxSize * Math.sign(height);
-    return { boxEndX, boxEndY };
-  }
-
-  getSecondCorner(corner1: ImageXY, anotherPoint: ImageXY): ImageXY {
+  // inputs: corner1 within the image, anotherPoint any point (can be outside, in image coordinates)
+  constrainSecondCorner(corner1: ImageXY, anotherPoint: ImageXY): ImageXY {
     const clipImgEnd = this.clipImageCoords(anotherPoint.imgX, anotherPoint.imgY);
     const width = clipImgEnd.imgX - corner1.imgX;
     const height = clipImgEnd.imgY - corner1.imgY;
