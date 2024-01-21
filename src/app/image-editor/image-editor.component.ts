@@ -89,10 +89,14 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     if (!this.currentImage || !this.coordinates) {
       return;
     }
+    this.clearOverlay();
 
     const { overlay, overlayCtx } = this.getOverlayAndContext();
     const { canvasX, canvasY } = this.coordinates.clientToCanvas(e.clientX, e.clientY);
-    this.clearOverlay();
+    const imgCoord = this.coordinates.canvasToImage(canvasX, canvasY);
+    const imgClipped = this.coordinates.clipImageCoords(imgCoord.imgX, imgCoord.imgY);
+    const canvasClipped = this.coordinates.imageToCanvas(imgClipped.imgX, imgClipped.imgY);
+    this.drawCircle(overlayCtx, canvasClipped.canvasX, canvasClipped.canvasY, 5);
 
     if (!this.selectingRegion) {
       this.drawDashedLine(overlayCtx, 0, canvasY, overlay.width, canvasY);
@@ -186,6 +190,13 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     ctx.moveTo(x0, y0);
     ctx.lineTo(x1, y1);
     ctx.stroke();
+  }
+
+  drawCircle(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, fillStyle: string = 'red') {
+    ctx.fillStyle = fillStyle;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   testExif() {

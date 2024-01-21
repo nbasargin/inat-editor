@@ -21,6 +21,13 @@ export class CanvasCoordinates {
     return { imgX, imgY };
   }
 
+  // allow values from 0 to width/height (including)
+  clipImageCoords(imgX: number, imgY: number) {
+    imgX = Math.min(this.img.width, Math.max(0, imgX));
+    imgY = Math.min(this.img.height, Math.max(0, imgY));
+    return { imgX, imgY };
+  }
+
   imageToCanvas(imgX: number, imgY: number) {
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage();
     const scalingFactorX = scaledImgWidth / this.img.width;
