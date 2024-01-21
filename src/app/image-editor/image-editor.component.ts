@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import * as piexifjs from 'piexifjs';
 import { FsItem } from '../fs-item';
 import { ImageLoader2 } from '../image-loader-2';
-import * as piexifjs from 'piexifjs';
+import { CanvasCoordinates } from '../canvas-coordinates';
 
 @Component({
   selector: 'ie-image-editor',
@@ -27,10 +28,11 @@ import * as piexifjs from 'piexifjs';
 export class ImageEditorComponent implements OnInit, OnDestroy {
   imageLoader: ImageLoader2 | null = null;
   currentImage: HTMLImageElement | null = null;
+  coordinates: CanvasCoordinates | null = null;
   resizeObserver = new ResizeObserver((entries) => {
     this.resizeCanvasIfNeeded();
-    if (this.currentImage) {
-      this.redrawImage(this.currentImage);
+    if (this.currentImage && this.coordinates) {
+      this.redrawImage(this.currentImage, this.coordinates);
     }
   });
 
@@ -56,8 +58,9 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
         return; // image already changed
       }
       this.currentImage = img;
+      this.coordinates = new CanvasCoordinates(this.overlayCanvasRef.nativeElement, img);
       this.resizeCanvasIfNeeded();
-      this.redrawImage(img);
+      this.redrawImage(img, this.coordinates);
     });
 
     // this.testExif();
@@ -72,26 +75,24 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   mouseDown(e: MouseEvent) {
-    if (!this.currentImage) {
+    if (!this.currentImage || !this.coordinates) {
       return;
     }
     e.preventDefault();
-    const { canvasX, canvasY } = this.clientToCanvas(e.clientX, e.clientY);
+    const { canvasX, canvasY } = this.coordinates.clientToCanvas(e.clientX, e.clientY);
     this.startCanvasX = canvasX;
     this.startCanvasY = canvasY;
     this.selectingRegion = true;
   }
 
   mouseMove(e: MouseEvent) {
-    if (!this.currentImage) {
+    if (!this.currentImage || !this.coordinates) {
       return;
     }
 
     const { overlay, overlayCtx } = this.getOverlayAndContext();
-    const { canvasX, canvasY } = this.clientToCanvas(e.clientX, e.clientY);
+    const { canvasX, canvasY } = this.coordinates.clientToCanvas(e.clientX, e.clientY);
     this.clearOverlay();
-
-    console.log(this.canvasToImage(canvasX, canvasY, this.currentImage, overlay));
 
     if (!this.selectingRegion) {
       this.drawDashedLine(overlayCtx, 0, canvasY, overlay.width, canvasY);
@@ -143,27 +144,6 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  clientToCanvas(clientX: number, clientY: number) {
-    const overlay = this.overlayCanvasRef.nativeElement;
-    const { x, y } = overlay.getBoundingClientRect();
-    const canvasX = (clientX - x) * devicePixelRatio;
-    const canvasY = (clientY - y) * devicePixelRatio;
-    return { canvasX, canvasY };
-  }
-
-  canvasToImage(canvasX: number, canvasY: number, img: HTMLImageElement, canvas: HTMLCanvasElement) {
-    const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage(
-      img.width,
-      img.height,
-      canvas.width,
-      canvas.height,
-    );
-    const scalingFactor = scaledImgWidth / img.width;
-    const imgX = (canvasX - canvasLeft) / scalingFactor;
-    const imgY = (canvasY - canvasTop) / scalingFactor;
-    return { imgX, imgY };
-  }
-
   getCanvasAndContext() {
     const canvas = this.imageCanvasRef.nativeElement;
     const ctx = canvas?.getContext('2d') as CanvasRenderingContext2D; // should never be null in this case
@@ -186,15 +166,9 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
   }
 
-  redrawImage(img: HTMLImageElement) {
+  redrawImage(img: HTMLImageElement, coordinates: CanvasCoordinates) {
     const { canvas, ctx } = this.getCanvasAndContext();
-    // compute image area
-    const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage(
-      img.width,
-      img.height,
-      canvas.width,
-      canvas.height,
-    );
+    const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = coordinates.fitImage();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight);
   }
@@ -212,22 +186,6 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     ctx.moveTo(x0, y0);
     ctx.lineTo(x1, y1);
     ctx.stroke();
-  }
-
-  private fitImage(imgWidth: number, imgHeight: number, canvasWidth: number, canvasHeight: number) {
-    const hRatio = canvasWidth / imgWidth;
-    const vRatio = canvasHeight / imgHeight;
-    const scalingFactor = Math.min(hRatio, vRatio, 1); // do not scale up image if it is smaller than canvas
-    const scaledImgWidth = Math.floor(imgWidth * scalingFactor);
-    const scaledImgHeight = Math.floor(imgHeight * scalingFactor);
-    const canvasLeft = Math.floor((canvasWidth - scaledImgWidth) / 2);
-    const canvasTop = Math.floor((canvasHeight - scaledImgHeight) / 2);
-    return {
-      canvasLeft,
-      canvasTop,
-      scaledImgWidth,
-      scaledImgHeight,
-    };
   }
 
   testExif() {
