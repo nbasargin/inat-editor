@@ -1,8 +1,13 @@
+export interface ImageXY {
+  imgX: number;
+  imgY: number;
+}
+
 export class CanvasCoordinates {
   constructor(
     public canvas: HTMLCanvasElement,
     public img: HTMLImageElement,
-    public canvasPadding: number = 8,
+    public canvasPadding: number = 16,
   ) {}
 
   clientToCanvas(clientX: number, clientY: number) {
@@ -22,7 +27,7 @@ export class CanvasCoordinates {
   }
 
   // allow values from 0 to width/height (including)
-  clipImageCoords(imgX: number, imgY: number) {
+  clipImageCoords(imgX: number, imgY: number): ImageXY {
     imgX = Math.min(this.img.width, Math.max(0, imgX));
     imgY = Math.min(this.img.height, Math.max(0, imgY));
     return { imgX, imgY };
@@ -37,6 +42,16 @@ export class CanvasCoordinates {
     const boxEndX = imgStartX + maxSize * Math.sign(width);
     const boxEndY = imgStartY + maxSize * Math.sign(height);
     return { boxEndX, boxEndY };
+  }
+
+  getSecondCorner(corner1: ImageXY, anotherPoint: ImageXY): ImageXY {
+    const clipImgEnd = this.clipImageCoords(anotherPoint.imgX, anotherPoint.imgY);
+    const width = clipImgEnd.imgX - corner1.imgX;
+    const height = clipImgEnd.imgY - corner1.imgY;
+    const maxSize = Math.min(Math.abs(width), Math.abs(height));
+    const boxEndX = corner1.imgX + maxSize * Math.sign(width);
+    const boxEndY = corner1.imgY + maxSize * Math.sign(height);
+    return { imgX: boxEndX, imgY: boxEndY };
   }
 
   imageToCanvas(imgX: number, imgY: number) {
