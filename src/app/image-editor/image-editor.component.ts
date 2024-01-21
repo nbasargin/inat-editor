@@ -91,6 +91,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const { canvasX, canvasY } = this.clientToCanvas(e.clientX, e.clientY);
     this.clearOverlay();
 
+    console.log(this.canvasToImage(canvasX, canvasY, this.currentImage, overlay));
+
     if (!this.selectingRegion) {
       this.drawDashedLine(overlayCtx, 0, canvasY, overlay.width, canvasY);
       this.drawDashedLine(overlayCtx, canvasX, 0, canvasX, overlay.height);
@@ -147,6 +149,19 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const canvasX = (clientX - x) * devicePixelRatio;
     const canvasY = (clientY - y) * devicePixelRatio;
     return { canvasX, canvasY };
+  }
+
+  canvasToImage(canvasX: number, canvasY: number, img: HTMLImageElement, canvas: HTMLCanvasElement) {
+    const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage(
+      img.width,
+      img.height,
+      canvas.width,
+      canvas.height,
+    );
+    const scalingFactor = scaledImgWidth / img.width;
+    const imgX = (canvasX - canvasLeft) / scalingFactor;
+    const imgY = (canvasY - canvasTop) / scalingFactor;
+    return { imgX, imgY };
   }
 
   getCanvasAndContext() {
