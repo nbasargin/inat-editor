@@ -7,6 +7,7 @@ import { ImageEditorComponent } from './image-editor/image-editor.component';
 
 import { FsItem } from './fs-item';
 import { ImageXY } from './canvas-coordinates';
+import { ExportImage } from './export-image';
 
 @Component({
   selector: 'ie-root',
@@ -70,7 +71,11 @@ export class AppComponent {
   }
 
   cropImageRegion(img: HTMLImageElement, minXY: ImageXY, maxXY: ImageXY) {
-    console.log(`minx ${minXY.imgX}, maxx ${maxXY.imgX}, miny ${minXY.imgY}, maxy ${maxXY.imgY}`);
+    if (!this.selectedFile) {
+      return;
+    }
+    const exporter = new ExportImage();
+    exporter.exportImage(this.selectedFile, img, minXY, maxXY);
   }
 
   @HostListener('document:keydown', ['$event'])
