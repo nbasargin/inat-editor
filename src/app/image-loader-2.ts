@@ -1,22 +1,27 @@
 export class ImageLoader2 {
-  asyncDataURL: Promise<string | null>;
+  asyncDataURL: Promise<string>;
 
   constructor(public readonly handle: FileSystemFileHandle) {
     this.asyncDataURL = this.startLoading();
   }
 
-  private async startLoading(): Promise<string | null> {
+  private async startLoading(): Promise<string> {
     const file = await this.handle.getFile();
     if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
-      return null;
+      throw new Error(`File type is not allowed: ${file.type}!`);
     }
-    return new Promise<string | null>((resolve) => {
+    return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.addEventListener('load', () => {
-        resolve(reader.result as string);
+        const result = reader.result as string | null;
+        if (!result) {
+          reject();
+        } else {
+          resolve(result);
+        }
       });
       reader.addEventListener('error', () => {
-        resolve(null);
+        reject();
       });
       reader.readAsDataURL(file);
     });

@@ -1,7 +1,17 @@
 import * as piexifjs from 'piexifjs';
 
 export class ExifUtils {
-  testExif(jpegData: string) {
+  static readExifFromDataUrl(dataUrl: string) {
+    return piexifjs.load(dataUrl);
+  }
+
+  static writeExifToDataUrl(dataUrl: string, exifObj: piexifjs.ExifObject) {
+    const dataClean = piexifjs.remove(dataUrl);
+    const exifBytes = piexifjs.dump(exifObj);
+    return piexifjs.insert(exifBytes, dataClean);
+  }
+
+  static testExif(jpegData: string) {
     if (!jpegData) return;
     const exifObj = piexifjs.load(jpegData);
     const exifBytes = piexifjs.dump(exifObj);

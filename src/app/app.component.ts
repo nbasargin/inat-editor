@@ -39,7 +39,7 @@ import { ExportImage } from './export-image';
         ></ie-file-list>
         <ie-image-editor
           [selectedFile]="selectedFile"
-          (cropImageRegion)="cropImageRegion($event.img, $event.minXY, $event.maxXY)"
+          (cropImageRegion)="cropImageRegion($event.img, $event.dataUrl, $event.minXY, $event.maxXY)"
         ></ie-image-editor>
       </div>
     </div>
@@ -70,12 +70,12 @@ export class AppComponent {
     this.selectedFile = selectedFile;
   }
 
-  cropImageRegion(img: HTMLImageElement, minXY: ImageXY, maxXY: ImageXY) {
+  cropImageRegion(img: HTMLImageElement, dataUrl: string, minXY: ImageXY, maxXY: ImageXY) {
     if (!this.selectedFile) {
       return;
     }
     const exporter = new ExportImage();
-    exporter.exportImage(this.selectedFile, img, minXY, maxXY);
+    exporter.exportImage(this.selectedFile, img, dataUrl, minXY, maxXY);
   }
 
   @HostListener('document:keydown', ['$event'])

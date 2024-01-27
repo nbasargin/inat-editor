@@ -52,6 +52,7 @@ import { Subject } from 'rxjs';
 export class ImageEditorComponent implements OnInit, OnDestroy {
   imageLoader: ImageLoader2 | null = null;
   currentImage: HTMLImageElement | null = null;
+  currentImageDataUrl: string | null = null;
   coordinates: CanvasCoordinates | null = null;
   resizeObserver = new ResizeObserver((entries) => {
     this.resizeCanvasIfNeeded();
@@ -83,18 +84,24 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
     const imageLoader = new ImageLoader2(fsItem.handle);
     this.imageLoader = imageLoader;
-    this.asyncDataUrlToImage(this.imageLoader.asyncDataURL).then((img) => {
+    this.asyncDataUrlToImage(this.imageLoader.asyncDataURL).then(({ img, dataUrl }) => {
       if (this.imageLoader != imageLoader) {
         return; // image already changed
       }
       this.currentImage = img;
+      this.currentImageDataUrl = dataUrl;
       this.coordinates = new CanvasCoordinates(this.overlayCanvasRef.nativeElement, img);
       this.resizeCanvasIfNeeded();
       this.redrawImage(img, this.coordinates);
     });
   }
 
-  @Output() cropImageRegion = new EventEmitter<{ img: HTMLImageElement; minXY: ImageXY; maxXY: ImageXY }>();
+  @Output() cropImageRegion = new EventEmitter<{
+    img: HTMLImageElement;
+    dataUrl: string;
+    minXY: ImageXY;
+    maxXY: ImageXY;
+  }>();
 
   ngOnInit(): void {
     this.resizeObserver.observe(this.imageCanvasRef.nativeElement);
@@ -172,7 +179,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   cropImage(imgC1: ImageXY, imgC2: ImageXY) {
-    if (!this.currentImage) {
+    if (!this.currentImage || !this.currentImageDataUrl) {
       return;
     }
     const minX = Math.min(imgC1.imgX, imgC2.imgX);
@@ -182,17 +189,17 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const minXY = { imgX: minX, imgY: minY };
     const maxXY = { imgX: maxX, imgY: maxY };
     const img = this.currentImage;
-    this.cropImageRegion.next({ img, minXY, maxXY });
+    this.cropImageRegion.next({ img, dataUrl: this.currentImageDataUrl, minXY, maxXY });
   }
 
-  async asyncDataUrlToImage(asyncDataURL: Promise<string | null>): Promise<HTMLImageElement> {
+  async asyncDataUrlToImage(asyncDataURL: Promise<string | null>): Promise<{ img: HTMLImageElement; dataUrl: string }> {
     const dataUrl = await asyncDataURL;
     return new Promise((resolve, reject) => {
       if (!dataUrl) {
         reject();
       } else {
         const img = new Image();
-        img.onload = () => resolve(img);
+        img.onload = () => resolve({ img, dataUrl });
         img.onerror = () => reject();
         img.src = dataUrl;
       }
