@@ -15,7 +15,7 @@ export class ExportImage {
     imgDataUrl: string,
     minXY: ImageXY,
     maxXY: ImageXY,
-  ) {
+  ): Promise<FsItem<FileSystemFileHandle>> {
     // read exif data for original dataurl
     const originalExif: ExifObject = ExifUtils.readExifFromDataUrl(imgDataUrl);
     // modify exif to include correct dimensions, old x,y + width, height
@@ -29,20 +29,16 @@ export class ExportImage {
     // save cropped image to disk
     const exportFolder = await this.getExportFolder(imageFile);
     const outFileName = 'test_dummy_with_exif.jpg';
-    await this.writeBlobToFile(imgBlob, exportFolder.handle, outFileName);
-
-    const folderPath = exportFolder
-      .getFullPath()
-      .map((fsItem) => fsItem.handle.name)
-      .join('/');
-    console.log(`Exported image to ${folderPath}/${outFileName}`);
+    const outFile = await this.writeBlobToFile(imgBlob, exportFolder, outFileName);
+    return outFile;
   }
 
-  async writeBlobToFile(blob: Blob, exportFolder: FileSystemDirectoryHandle, fileName: string) {
-    const fileHandle = await exportFolder.getFileHandle(fileName, { create: true });
+  async writeBlobToFile(blob: Blob, exportFolder: FsItem<FileSystemDirectoryHandle>, fileName: string) {
+    const fileHandle = await exportFolder.handle.getFileHandle(fileName, { create: true });
     const writable = await fileHandle.createWritable();
     await writable.write(blob);
     await writable.close();
+    return new FsItem(fileHandle, exportFolder);
   }
 
   cropImageToDataUrl(img: HTMLImageElement, minXY: ImageXY, maxXY: ImageXY): string {

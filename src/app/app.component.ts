@@ -75,9 +75,18 @@ export class AppComponent {
       return;
     }
     const exporter = new ExportImage();
-    exporter.exportImage(this.selectedFile, img, dataUrl, minXY, maxXY).catch((e) => {
-      console.error('Could not export selected image region!', e);
-    });
+    exporter
+      .exportImage(this.selectedFile, img, dataUrl, minXY, maxXY)
+      .then((file) => {
+        const filePath = file
+          .getFullPath()
+          .map((fsItem) => fsItem.handle.name)
+          .join('/');
+        console.log(`Exported image to "${filePath}"`);
+      })
+      .catch((e) => {
+        console.error('Could not export selected image region!', e);
+      });
   }
 
   @HostListener('document:keydown', ['$event'])
