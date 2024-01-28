@@ -4,7 +4,7 @@ export interface ExifObject {
   GPS: { [key: number]: any };
   Interop: { [key: number]: any };
   '1st': { [key: number]: any };
-  thumbnail: string;
+  thumbnail: string | null;
 }
 
 declare module 'piexifjs' {
