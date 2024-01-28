@@ -75,7 +75,9 @@ export class AppComponent {
       return;
     }
     const exporter = new ExportImage();
-    exporter.exportImage(this.selectedFile, img, dataUrl, minXY, maxXY);
+    exporter.exportImage(this.selectedFile, img, dataUrl, minXY, maxXY).catch((e) => {
+      console.error('Could not export selected image region!', e);
+    });
   }
 
   @HostListener('document:keydown', ['$event'])
