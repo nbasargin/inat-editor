@@ -11,6 +11,23 @@ export class ExifUtils {
     return piexifjs.insert(exifBytes, dataClean);
   }
 
+  static logExif(exifObj: piexifjs.ExifObject) {
+    for (const ifd in exifObj) {
+      if (ifd == 'thumbnail') {
+        const thumbnailData = exifObj[ifd];
+        const thumbComment = thumbnailData ? `available, ${thumbnailData.length} chars` : 'missing';
+        console.log(`- thumbnail: ${thumbComment}`);
+      } else {
+        const ifdTyped = ifd as '0th' | 'Exif' | 'GPS' | 'Interop' | '1st';
+        console.log(`- ${ifd}`);
+        console.log();
+        for (const tag in exifObj[ifdTyped]) {
+          console.log(`    - ${piexifjs.TAGS[ifdTyped][tag]['name']}: ${exifObj[ifdTyped][tag]}`);
+        }
+      }
+    }
+  }
+
   static testExif(jpegData: string) {
     if (!jpegData) return;
     const exifObj = piexifjs.load(jpegData);
@@ -22,17 +39,6 @@ export class ExifUtils {
     console.log('jpegDataClean', jpegDataClean.length);
     console.log('newData', newData.length);
 
-    for (const ifd in exifObj) {
-      if (ifd == 'thumbnail') {
-        const thumbnailData = exifObj[ifd] === null ? 'null' : exifObj[ifd];
-        console.log(`- thumbnail: ${thumbnailData}`);
-      } else {
-        const ifdTyped = ifd as '0th' | 'Exif' | 'GPS' | 'Interop' | '1st';
-        console.log(`- ${ifd}`);
-        for (const tag in exifObj[ifdTyped]) {
-          console.log(`    - ${piexifjs.TAGS[ifdTyped][tag]['name']}: ${exifObj[ifdTyped][tag]}`);
-        }
-      }
-    }
+    ExifUtils.logExif(exifObj);
   }
 }
