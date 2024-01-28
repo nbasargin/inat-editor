@@ -22,22 +22,23 @@ export class ExportImage {
     // read exif data for original dataurl
     const originalExif: ExifObject = ExifUtils.readExifFromDataUrl(imgDataUrl);
     // modify exif to include correct dimensions, old x,y + width, height
-    const newExif: ExifObject = this.adjustExif(originalExif, minXY, maxXY);
+    const newExif: ExifObject = this.createNewExif(originalExif, minXY, maxXY);
     // croppedImage to dataurl
     const croppedImageDataUrl = this.cropImageToDataUrl(img, minXY, maxXY);
     // write modified exif into croppedImage dataurl
     const finalDataUrl = ExifUtils.writeExifToDataUrl(croppedImageDataUrl, newExif);
     // convert dataurl to blob
     const imgBlob = this.dataUrlToBlob(finalDataUrl);
-
-    return; // TEMP TODO
-
     // save cropped image to disk
     const exportFolder = await this.getExportFolder(imageFile);
-    const outFileName = 'test_dummy_2.jpg';
-    const fileHandle = await exportFolder.getFileHandle(outFileName, { create: true });
+    const outFileName = 'test_dummy_with_exif.jpg';
+    await this.writeBlobToFile(imgBlob, exportFolder, outFileName);
+  }
+
+  async writeBlobToFile(blob: Blob, exportFolder: FileSystemDirectoryHandle, fileName: string) {
+    const fileHandle = await exportFolder.getFileHandle(fileName, { create: true });
     const writable = await fileHandle.createWritable();
-    await writable.write(imgBlob);
+    await writable.write(blob);
     await writable.close();
   }
 
@@ -55,17 +56,10 @@ export class ExportImage {
     return croppedDataUrl;
   }
 
-  adjustExif(originalExif: ExifObject, minXY: ImageXY, maxXY: ImageXY): ExifObject {
-    ExifUtils.logExif(originalExif);
-
+  createUserComment(minXY: ImageXY, maxXY: ImageXY): string {
     const { imgWidth, imgHeight, imgSize, canvasSize } = this.imgPointsToSize(minXY, maxXY);
-    // TODO extract useful EXIF data, not everything
-    // write image size metadata
-    // write software tag
-    // write user comment to store crop box
-
-    // user comment
     const userComment = {
+      cropSoftware: 'iNat Editor v0.1',
       cropBox: {
         x: minXY.imgX,
         y: minXY.imgX,
@@ -81,8 +75,85 @@ export class ExportImage {
       // the user comment string should only contain ascii characters
       throw new Error('Invalid user comment metadata!');
     }
+    return userCommentAscii;
+  }
 
-    return originalExif; // TODO
+  createNewExif(originalExif: ExifObject, minXY: ImageXY, maxXY: ImageXY): ExifObject {
+    const newExif: ExifObject = {
+      '0th': {},
+      Exif: {},
+      GPS: {},
+      Interop: {},
+      '1st': {},
+      thumbnail: null,
+    };
+
+    // extract whitelisted IDF0 tags
+    const whitelistedIDF0Tags = [
+      0x010f, // Exif.Image.Make
+      0x0110, // Exif.Image.Model
+      0x0131, // Exif.Image.Software
+      0x0132, // Exif.Image.DateTime
+    ];
+    for (const tag of whitelistedIDF0Tags) {
+      if (tag in originalExif['0th']) {
+        newExif['0th'][tag] = originalExif['0th'][tag];
+      }
+    }
+    // extract whitelisted EXIF / Photo tags
+    const whitelistedExifTags = [
+      0x829a, // Exif.Photo.ExposureTime
+      0x829d, // Exif.Photo.FNumber
+      0x8822, // Exif.Photo.ExposureProgram
+      0x8827, // Exif.Photo.ISOSpeedRatings
+      0x8830, // Exif.Photo.SensitivityType
+      0x8832, // Exif.Photo.RecommendedExposureIndex
+      0x9000, // Exif.Photo.ExifVersion
+      0x9003, // Exif.Photo.DateTimeOriginal
+      0x9004, // Exif.Photo.DateTimeDigitized
+      0x9010, // Exif.Photo.OffsetTime
+      0x9011, // Exif.Photo.OffsetTimeOriginal
+      0x9012, // Exif.Photo.OffsetTimeDigitized
+      0x9201, // Exif.Photo.ShutterSpeedValue
+      0x9202, // Exif.Photo.ApertureValue
+      0x9203, // Exif.Photo.BrightnessValue
+      0x9204, // Exif.Photo.ExposureBiasValue
+      0x9205, // Exif.Photo.MaxApertureValue
+      0x9207, // Exif.Photo.MeteringMode
+      0x9208, // Exif.Photo.LightSource
+      0x9209, // Exif.Photo.Flash
+      0x920a, // Exif.Photo.FocalLength
+      0xa402, // Exif.Photo.ExposureMode
+      0xa403, // Exif.Photo.WhiteBalance
+      0xa404, // Exif.Photo.DigitalZoomRatio
+      0xa405, // Exif.Photo.FocalLengthIn35mmFilm
+      0xa406, // Exif.Photo.SceneCaptureType
+      0xa408, // Exif.Photo.Contrast
+      0xa409, // Exif.Photo.Saturation
+      0xa40a, // Exif.Photo.Sharpness
+      0xa432, // Exif.Photo.LensSpecification
+      0xa433, // Exif.Photo.LensMake
+      0xa434, // Exif.Photo.LensModel
+    ];
+    for (const tag of whitelistedExifTags) {
+      if (tag in originalExif.Exif) {
+        newExif.Exif[tag] = originalExif.Exif[tag];
+      }
+    }
+    // extract all GPS tags
+    newExif.GPS = originalExif.GPS;
+
+    // write new data to EXIF tags
+    const { imgWidth, imgHeight } = this.imgPointsToSize(minXY, maxXY);
+    newExif.Exif[0xa002] = imgWidth; // Exif.Photo.PixelXDimension
+    newExif.Exif[0xa003] = imgHeight; // Exif.Photo.PixelYDimension
+    newExif.Exif[0x9286] = this.createUserComment(minXY, maxXY); // Exif.Photo.UserComment
+
+    // write new data to IDF0 tags
+    newExif['0th'][0x0100] = imgWidth; // Exif.Image.ImageWidth
+    newExif['0th'][0x0101] = imgHeight; // Exif.Image.ImageLength
+
+    return newExif;
   }
 
   dataUrlToBlob(dataUrl: string): Blob {
