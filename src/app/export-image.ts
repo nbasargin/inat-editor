@@ -16,9 +16,6 @@ export class ExportImage {
     minXY: ImageXY,
     maxXY: ImageXY,
   ) {
-    console.log(
-      `minx ${minXY.imgX}, miny ${minXY.imgY}, width ${maxXY.imgX - minXY.imgX}, height ${maxXY.imgY - minXY.imgY}`,
-    );
     // read exif data for original dataurl
     const originalExif: ExifObject = ExifUtils.readExifFromDataUrl(imgDataUrl);
     // modify exif to include correct dimensions, old x,y + width, height
@@ -32,7 +29,13 @@ export class ExportImage {
     // save cropped image to disk
     const exportFolder = await this.getExportFolder(imageFile);
     const outFileName = 'test_dummy_with_exif.jpg';
-    await this.writeBlobToFile(imgBlob, exportFolder, outFileName);
+    await this.writeBlobToFile(imgBlob, exportFolder.handle, outFileName);
+
+    const folderPath = exportFolder
+      .getFullPath()
+      .map((fsItem) => fsItem.handle.name)
+      .join('/');
+    console.log(`Exported image to ${folderPath}/${outFileName}`);
   }
 
   async writeBlobToFile(blob: Blob, exportFolder: FileSystemDirectoryHandle, fileName: string) {
@@ -169,13 +172,13 @@ export class ExportImage {
     return new Blob([typedArray], { type: 'image/jpeg' });
   }
 
-  async getExportFolder(imageFile: FsItem<FileSystemFileHandle>) {
+  async getExportFolder(imageFile: FsItem<FileSystemFileHandle>): Promise<FsItem<FileSystemDirectoryHandle>> {
     const imageFolder = imageFile.parent;
     if (!imageFolder) {
       throw new Error('Image file has no folder specified');
     }
     const exportFolder = await imageFolder.handle.getDirectoryHandle('iNat_new', { create: true });
-    return exportFolder;
+    return new FsItem<FileSystemDirectoryHandle>(exportFolder, imageFolder);
   }
 
   private imgPointsToSize(minXY: ImageXY, maxXY: ImageXY) {
