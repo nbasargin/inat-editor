@@ -76,10 +76,13 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.selectedRegion = new ImageRegion();
     const { overlay, overlayCtx } = this.getOverlayAndContext();
     CanvasDraw.clearCanvas(overlayCtx, overlay);
+    const { canvas, ctx } = this.getCanvasAndContext();
+    CanvasDraw.clearCanvas(ctx, canvas);
+    this.currentImage = null;
+    this.currentImageDataUrl = null;
+    this.coordinates = null;
     if (!fsItem) {
       this.imageLoader = null;
-      const { canvas, ctx } = this.getCanvasAndContext();
-      CanvasDraw.clearCanvas(ctx, canvas);
       return;
     }
     const imageLoader = new ImageLoader2(fsItem.handle);
