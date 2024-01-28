@@ -27,7 +27,7 @@ export class FolderSelectorComponent {
 
   async selectNewFolder() {
     try {
-      const selectedFolder = await window.showDirectoryPicker();
+      const selectedFolder = await window.showDirectoryPicker({ mode: 'readwrite' });
       this.folderSelected.emit(new FsItem<FileSystemDirectoryHandle>(selectedFolder, null));
     } catch (e) {
       console.error('Error opening folder', e);
