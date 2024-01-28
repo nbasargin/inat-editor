@@ -4,7 +4,7 @@ import { ExifUtils } from './exif-utils';
 import { FsItem } from './fs-item';
 
 export class ExportImage {
-  constructor() {}
+  constructor(public maxCropSize: number = 2048) {}
 
   async exportImage(
     imageFile: FsItem<FileSystemFileHandle>,
@@ -36,7 +36,22 @@ export class ExportImage {
   }
 
   cropImageToDataUrl(img: HTMLImageElement, minXY: ImageXY, maxXY: ImageXY): string {
-    return ''; // TODO
+    const canvas = document.createElement('canvas');
+    const imgWidth = maxXY.imgX - minXY.imgX;
+    const imgHeight = maxXY.imgY - minXY.imgY;
+    if (imgWidth != imgHeight) {
+      throw new Error('only square images allowed!');
+    }
+    const canvasSize = Math.min(imgWidth, this.maxCropSize);
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Could not obtain canvas context to crop the image!');
+    }
+    ctx.drawImage(img, minXY.imgX, minXY.imgY, imgWidth, imgHeight, 0, 0, canvasSize, canvasSize);
+    const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    return croppedDataUrl;
   }
 
   adjustExif(originalExif: ExifObject, minXY: ImageXY, maxXY: ImageXY): ExifObject {
@@ -44,7 +59,16 @@ export class ExportImage {
   }
 
   dataUrlToBlob(dataUrl: string): Blob {
-    return new Blob(); // TODO
+    if (!dataUrl.startsWith('data:image/jpeg;base64,')) {
+      throw new Error('Only data URLs starting with "data:image/jpeg;base64" allowed!');
+    }
+    const base64String = dataUrl.split(',')[1];
+    const byteString = atob(base64String);
+    const typedArray = new Uint8Array(new ArrayBuffer(byteString.length));
+    for (var i = 0; i < byteString.length; i++) {
+      typedArray[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([typedArray], { type: 'image/jpeg' });
   }
 
   async getExportFolder(imageFile: FsItem<FileSystemFileHandle>) {
