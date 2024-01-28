@@ -20,9 +20,9 @@ export class ExifUtils {
       } else {
         const ifdTyped = ifd as '0th' | 'Exif' | 'GPS' | 'Interop' | '1st';
         console.log(`- ${ifd}`);
-        console.log();
         for (const tag in exifObj[ifdTyped]) {
-          console.log(`    - ${piexifjs.TAGS[ifdTyped][tag]['name']}: ${exifObj[ifdTyped][tag]}`);
+          const stringValue = `${exifObj[ifdTyped][tag]}`;
+          console.log(`    - ${piexifjs.TAGS[ifdTyped][tag]['name']}: ${stringValue.substring(0, 30)}`);
         }
       }
     }
