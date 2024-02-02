@@ -59,7 +59,7 @@ export class ExportImage {
       cropSoftware: 'iNat Editor v0.1',
       cropBox: {
         x: minXY.imgX,
-        y: minXY.imgX,
+        y: minXY.imgY,
         width: imgWidth,
         height: imgHeight,
       },
