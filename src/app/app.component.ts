@@ -8,6 +8,7 @@ import { ImageEditorComponent } from './image-editor/image-editor.component';
 import { FsItem } from './fs-item';
 import { ImageXY } from './canvas-coordinates';
 import { ExportImage } from './export-image';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'ie-root',
@@ -52,7 +53,7 @@ export class AppComponent {
   selectedFile: FsItem<FileSystemFileHandle> | null = null;
   folderContents: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>> = [];
 
-  constructor() {
+  constructor(private _snackBar: MatSnackBar) {
     this.fileApiSupported = !!window.showOpenFilePicker;
   }
 
@@ -82,9 +83,11 @@ export class AppComponent {
           .getFullPath()
           .map((fsItem) => fsItem.handle.name)
           .join('/');
+        this.showMessage(`Exported image to "${filePath}"`);
         console.log(`Exported image to "${filePath}"`);
       })
       .catch((e) => {
+        this.showMessage('Could not export selected image region!');
         console.error('Could not export selected image region!', e);
       });
   }
@@ -122,5 +125,9 @@ export class AppComponent {
       return isFile && isImage;
     };
     return items.filter(filterFn) as Array<FsItem<FileSystemFileHandle>>;
+  }
+
+  showMessage(msg: string) {
+    this._snackBar.open(msg, undefined, { duration: 4000 });
   }
 }
