@@ -130,6 +130,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     e.preventDefault();
     const imgXY = this.coordinates.clientToImage(e);
     this.regionSelector.mouseDown(imgXY);
+    this.overlayCanvasRef.nativeElement.style.cursor = this.regionSelector.getCursor(imgXY);
   }
 
   mouseMove(e: MouseEvent) {
@@ -138,6 +139,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
     const imgXY = this.coordinates.clientToImage(e);
     this.regionSelector.mouseMove(imgXY);
+    this.overlayCanvasRef.nativeElement.style.cursor = this.regionSelector.getCursor(imgXY);
     this.redrawOverlay();
   }
 
@@ -147,6 +149,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
     const imgXY = this.coordinates.clientToImage(e);
     this.regionSelector.mouseUp(imgXY);
+    this.overlayCanvasRef.nativeElement.style.cursor = this.regionSelector.getCursor(imgXY);
     this.redrawOverlay();
   }
 

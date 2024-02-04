@@ -116,6 +116,23 @@ export class RegionSelector {
     }
   }
 
+  getCursor(imageXY: ImageXY) {
+    if (this.state.state === 'DEFINED') {
+      const closeCorner = this.getCloseCorner(this.state.imgCorner1, this.state.imgCorner2, imageXY);
+      if (closeCorner) {
+        return closeCorner.cursor;
+      }
+      if (this.isWithinRegion(this.state.imgCorner1, this.state.imgCorner2, imageXY)) {
+        return 'move';
+      }
+      return 'default';
+    }
+    if (this.state.state === 'MOVE_REGION') {
+      return 'move';
+    }
+    return 'crosshair'; // EMPTY or MOVE_CORNER
+  }
+
   /**
    * Clip a point to be within the image.
    * Output coorninate values from 0 to width/height (including) are possible.
