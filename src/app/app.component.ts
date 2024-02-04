@@ -124,7 +124,7 @@ export class AppComponent {
     const filterFn = (item: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>) => {
       const isFile = item.handle instanceof FileSystemFileHandle;
       const name = item.handle.name.toLowerCase();
-      const isImage = name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
+      const isImage = name.endsWith('.jpg') || name.endsWith('.jpeg');
       return isFile && isImage;
     };
     return items.filter(filterFn) as Array<FsItem<FileSystemFileHandle>>;

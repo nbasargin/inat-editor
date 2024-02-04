@@ -7,7 +7,7 @@ export class ImageLoader2 {
 
   private async startLoading(): Promise<string> {
     const file = await this.handle.getFile();
-    if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
+    if (file.type !== 'image/jpeg') {
       throw new Error(`File type is not allowed: ${file.type}!`);
     }
     return new Promise<string>((resolve, reject) => {
