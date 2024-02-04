@@ -267,9 +267,11 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     CanvasDraw.clearCanvas(overlayCtx, overlay);
     CanvasDraw.drawDashedBox(overlayCtx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
     // message
+    const x = Math.min(region.corner1.imgX, region.corner2.imgX);
+    const y = Math.min(region.corner1.imgY, region.corner2.imgY);
     const width = Math.abs(region.corner1.imgX - region.corner2.imgX);
     const height = Math.abs(region.corner1.imgY - region.corner2.imgY);
-    this.infoMessage.next(`W ${width}; H ${height}`);
+    this.infoMessage.next(`X ${x}; Y ${y}; W ${width}; H ${height}`);
   }
 
   private getRegionSelectorArea() {
