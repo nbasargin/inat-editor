@@ -250,7 +250,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   redrawOverlay() {
-    if (!this.coordinates) {
+    if (!this.coordinates || !this.regionSelector) {
       return;
     }
     const region = this.getRegionSelectorArea();
@@ -266,6 +266,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const { overlay, overlayCtx } = this.getOverlayAndContext();
     CanvasDraw.clearCanvas(overlayCtx, overlay);
     CanvasDraw.drawDarkArea(overlayCtx, overlay, canvasC1, canvasC2);
+    CanvasDraw.drawThirds(overlayCtx, canvasC1, canvasC2);
     CanvasDraw.drawDashedBox(overlayCtx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
     // message
     const x = Math.min(region.corner1.imgX, region.corner2.imgX);
