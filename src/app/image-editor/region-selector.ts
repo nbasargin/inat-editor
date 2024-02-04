@@ -200,7 +200,7 @@ export class RegionSelector {
 
   private isWithinRegion(corner1: ImageXY, corner2: ImageXY, { imgX, imgY }: ImageXY) {
     const { minX, maxX, minY, maxY } = this.cornersToMinMax(corner1, corner2);
-    return imgX >= minX && imgY <= maxX && imgY >= minY && imgY <= maxY;
+    return imgX >= minX && imgX <= maxX && imgY >= minY && imgY <= maxY;
   }
 
   private distance(point1: ImageXY, point2: ImageXY) {
