@@ -178,7 +178,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   cropImage(imgC1: ImageXY, imgC2: ImageXY) {
-    if (!this.currentImage || !this.currentImageDataUrl) {
+    if (!this.currentImage || !this.currentImageDataUrl || !this.regionSelector) {
       return;
     }
     const minX = Math.min(imgC1.imgX, imgC2.imgX);
@@ -188,6 +188,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const minXY = { imgX: minX, imgY: minY };
     const maxXY = { imgX: maxX, imgY: maxY };
     const img = this.currentImage;
+    this.regionSelector.resetState();
+    this.redrawOverlay();
     this.cropImageRegion.next({ img, dataUrl: this.currentImageDataUrl, minXY, maxXY });
   }
 
