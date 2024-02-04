@@ -265,6 +265,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const canvasC2 = this.coordinates.imageToCanvas(region.corner2);
     const { overlay, overlayCtx } = this.getOverlayAndContext();
     CanvasDraw.clearCanvas(overlayCtx, overlay);
+    CanvasDraw.drawDarkArea(overlayCtx, overlay, canvasC1, canvasC2);
     CanvasDraw.drawDashedBox(overlayCtx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
     // message
     const x = Math.min(region.corner1.imgX, region.corner2.imgX);
