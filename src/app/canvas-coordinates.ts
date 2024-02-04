@@ -36,6 +36,10 @@ export class CanvasCoordinates {
     return { imgX, imgY };
   }
 
+  clientToImage(clientXY: ClientXY) {
+    return this.canvasToImage(this.clientToCanvas(clientXY));
+  }
+
   // allow values from 0 to width/height (including)
   clipImageCoords({ imgX, imgY }: ImageXY): ImageXY {
     imgX = Math.min(this.img.width, Math.max(0, imgX));
@@ -79,5 +83,13 @@ export class CanvasCoordinates {
       scaledImgWidth,
       scaledImgHeight,
     };
+  }
+
+  getDistanceThreshold() {
+    const c1 = this.clientToCanvas({ clientX: 0, clientY: 0 });
+    const c2 = this.clientToCanvas({ clientX: 24, clientY: 0 });
+    const i1 = this.canvasToImage(c1);
+    const i2 = this.canvasToImage(c2);
+    return i2.imgX - i1.imgX;
   }
 }

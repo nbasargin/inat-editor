@@ -27,7 +27,7 @@ export type RegionSelectorState =
  * Region selection and adjustment, in image coordinates.
  */
 export class RegionSelector {
-  private state: RegionSelectorState = { state: 'EMPTY' };
+  state: RegionSelectorState = { state: 'EMPTY' };
 
   constructor(
     public imgWidth: number,
