@@ -13,10 +13,10 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { FsItem } from '../fs-item';
 import { ImageLoader2 } from '../image-loader-2';
-import { CanvasCoordinates, ClientXY, ImageXY } from '../canvas-coordinates';
+import { CanvasCoordinates, ImageXY } from '../canvas-coordinates';
 import { CanvasDraw } from '../canvas-draw';
-import { ImageRegion } from '../image-region';
 import { Subject } from 'rxjs';
+import { RegionSelector } from './region-selector';
 
 @Component({
   selector: 'ie-image-editor',
@@ -35,8 +35,13 @@ import { Subject } from 'rxjs';
         (mouseleave)="mouseLeave($event)"
       ></canvas>
 
-      <div class="button-container" *ngIf="selectedRegion.corner1 && selectedRegion.corner2">
-        <button mat-raised-button color="primary" (click)="cropImage(selectedRegion.corner1, selectedRegion.corner2)">
+      <div class="button-container" *ngIf="regionSelector && regionSelector.state.state === 'DEFINED'">
+        <button mat-raised-button color="warn" (click)="cancelCrop()">Cancel</button>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="cropImage(regionSelector.state.imgCorner1, regionSelector.state.imgCorner2)"
+        >
           Crop Image
         </button>
       </div>
@@ -54,17 +59,18 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   currentImage: HTMLImageElement | null = null;
   currentImageDataUrl: string | null = null;
   coordinates: CanvasCoordinates | null = null;
+  regionSelector: RegionSelector | null = null;
   resizeObserver = new ResizeObserver((entries) => {
     this.resizeCanvasIfNeeded();
     if (this.currentImage && this.coordinates) {
       this.redrawImage(this.currentImage, this.coordinates);
-      if (this.selectedRegion.corner1 && this.selectedRegion.corner2) {
-        this.redrawSelectedRegionOutline(this.selectedRegion.corner1, this.selectedRegion.corner2, this.coordinates);
-      }
+      this.redrawOverlay();
+    }
+    if (this.regionSelector && this.coordinates) {
+      this.regionSelector.distThreshold = this.coordinates.getDistanceThreshold();
     }
   });
 
-  selectedRegion = new ImageRegion();
   infoMessage = new Subject<string>();
 
   @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
@@ -73,7 +79,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   // later: refactor to an input that accepts an image or null, not a file handle
   // file handling should happen outside
   @Input() set selectedFile(fsItem: FsItem<FileSystemFileHandle> | null) {
-    this.selectedRegion = new ImageRegion();
+    //this.selectedRegion = new ImageRegion();
     const { overlay, overlayCtx } = this.getOverlayAndContext();
     CanvasDraw.clearCanvas(overlayCtx, overlay);
     const { canvas, ctx } = this.getCanvasAndContext();
@@ -81,6 +87,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.currentImage = null;
     this.currentImageDataUrl = null;
     this.coordinates = null;
+    this.regionSelector = null;
     if (!fsItem) {
       this.imageLoader = null;
       return;
@@ -94,6 +101,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       this.currentImage = img;
       this.currentImageDataUrl = dataUrl;
       this.coordinates = new CanvasCoordinates(this.overlayCanvasRef.nativeElement, img);
+      const distThreshold = this.coordinates.getDistanceThreshold();
+      this.regionSelector = new RegionSelector(img.width, img.height, distThreshold);
       this.resizeCanvasIfNeeded();
       this.redrawImage(img, this.coordinates);
     });
@@ -115,70 +124,54 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   mouseDown(e: MouseEvent) {
-    if (!this.currentImage || !this.coordinates) {
+    if (!this.currentImage || !this.coordinates || !this.regionSelector) {
       return;
     }
     e.preventDefault();
-    const canvasCoord = this.coordinates.clientToCanvas(e);
-    const imgCoord = this.coordinates.canvasToImage(canvasCoord);
-    const imgClipped = this.coordinates.clipImageCoords(imgCoord);
-    this.selectedRegion = new ImageRegion();
-    this.selectedRegion.corner1 = imgClipped;
+    const imgXY = this.coordinates.clientToImage(e);
+    this.regionSelector.mouseDown(imgXY);
   }
 
   mouseMove(e: MouseEvent) {
-    if (!this.currentImage || !this.coordinates) {
+    if (!this.currentImage || !this.coordinates || !this.regionSelector) {
       return;
     }
-    const canvasCoord = this.coordinates.clientToCanvas(e);
-    const imgCoord = this.coordinates.canvasToImage(canvasCoord);
-
-    if (!this.selectedRegion.corner1 || this.selectedRegion.corner2) {
-      const withinImage = this.coordinates.clipImageCoords(imgCoord);
-      this.infoMessage.next(`X ${withinImage.imgX}; Y ${withinImage.imgY}`);
-      return;
-    }
-
-    const imgC1 = this.selectedRegion.corner1;
-    const imgC2 = this.coordinates.constrainSecondCorner(imgC1, imgCoord);
-    this.redrawSelectedRegionOutline(this.selectedRegion.corner1, imgC2, this.coordinates);
-
-    const width = Math.abs(imgC2.imgX - imgC1.imgX);
-    const height = Math.abs(imgC2.imgY - imgC1.imgY);
-    this.infoMessage.next(`W ${width}; H ${height}`);
+    const imgXY = this.coordinates.clientToImage(e);
+    this.regionSelector.mouseMove(imgXY);
+    this.redrawOverlay();
   }
 
   mouseUp(e: MouseEvent) {
-    if (!this.currentImage || !this.coordinates || !this.selectedRegion.corner1) {
+    if (!this.currentImage || !this.coordinates || !this.regionSelector) {
       return;
     }
-    const imgC2 = this.getSecondCorner(this.coordinates, this.selectedRegion.corner1, e);
-    const imgBoxWidth = Math.abs(this.selectedRegion.corner1.imgX - imgC2.imgX);
-    if (imgBoxWidth > 5) {
-      // selected region valid, keep for later
-      this.selectedRegion.corner2 = imgC2;
-      this.redrawSelectedRegionOutline(this.selectedRegion.corner1, imgC2, this.coordinates);
-    } else {
-      // box too small
-      this.selectedRegion = new ImageRegion();
-      const { overlay, overlayCtx } = this.getOverlayAndContext();
-      CanvasDraw.clearCanvas(overlayCtx, overlay);
-    }
+    const imgXY = this.coordinates.clientToImage(e);
+    this.regionSelector.mouseUp(imgXY);
+    this.redrawOverlay();
   }
 
   mouseEnter(e: MouseEvent) {
-    if (!this.selectedRegion.corner2 && (e.buttons & 1) !== 1) {
+    if (!this.regionSelector) {
+      return;
+    }
+    const primaryButtonUp = (e.buttons & 1) !== 1;
+    const state = this.regionSelector.state.state;
+    if (primaryButtonUp && (state === 'MOVE_ONE_CORNER' || state === 'MOVE_REGION')) {
       // selection not complete but primary button not pressed, cancel selection
-      this.selectedRegion = new ImageRegion();
+      this.regionSelector.resetState();
     }
   }
 
   mouseLeave(e: MouseEvent) {
-    if (!this.selectedRegion.corner2) {
+    if (!this.regionSelector) {
+      return;
+    }
+    const state = this.regionSelector.state;
+    if (state.state === 'MOVE_ONE_CORNER' || state.state == 'MOVE_REGION') {
       const { overlay, overlayCtx } = this.getOverlayAndContext();
       CanvasDraw.clearCanvas(overlayCtx, overlay);
+      this.infoMessage.next('');
     }
-    this.infoMessage.next('');
   }
 
   cropImage(imgC1: ImageXY, imgC2: ImageXY) {
@@ -193,6 +186,14 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const maxXY = { imgX: maxX, imgY: maxY };
     const img = this.currentImage;
     this.cropImageRegion.next({ img, dataUrl: this.currentImageDataUrl, minXY, maxXY });
+  }
+
+  cancelCrop() {
+    if (!this.regionSelector) {
+      return;
+    }
+    this.regionSelector.resetState();
+    this.redrawOverlay();
   }
 
   async asyncDataUrlToImage(asyncDataURL: Promise<string | null>): Promise<{ img: HTMLImageElement; dataUrl: string }> {
@@ -245,18 +246,43 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     ctx.drawImage(img, canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight);
   }
 
-  redrawSelectedRegionOutline(imgC1: ImageXY, imgC2: ImageXY, coordinates: CanvasCoordinates) {
-    const canvasC1 = coordinates.imageToCanvas(imgC1);
-    const canvasC2 = coordinates.imageToCanvas(imgC2);
+  redrawOverlay() {
+    if (!this.coordinates) {
+      return;
+    }
+    const region = this.getRegionSelectorArea();
+    if (!region) {
+      const { overlay, overlayCtx } = this.getOverlayAndContext();
+      CanvasDraw.clearCanvas(overlayCtx, overlay);
+      this.infoMessage.next('');
+      return;
+    }
+    // outline
+    const canvasC1 = this.coordinates.imageToCanvas(region.corner1);
+    const canvasC2 = this.coordinates.imageToCanvas(region.corner2);
     const { overlay, overlayCtx } = this.getOverlayAndContext();
     CanvasDraw.clearCanvas(overlayCtx, overlay);
     CanvasDraw.drawDashedBox(overlayCtx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
+    // message
+    const width = Math.abs(region.corner1.imgX - region.corner2.imgX);
+    const height = Math.abs(region.corner1.imgY - region.corner2.imgY);
+    this.infoMessage.next(`W ${width}; H ${height}`);
   }
 
-  getSecondCorner(coordinates: CanvasCoordinates, imgC1: ImageXY, clientXY: ClientXY) {
-    const canvasCoord = coordinates.clientToCanvas(clientXY);
-    const imgCoord = coordinates.canvasToImage(canvasCoord);
-    const imgC2 = coordinates.constrainSecondCorner(imgC1, imgCoord);
-    return imgC2;
+  private getRegionSelectorArea() {
+    if (!this.regionSelector) {
+      return null;
+    }
+    const state = this.regionSelector.state;
+    if (state.state === 'DEFINED') {
+      return { corner1: state.imgCorner1, corner2: state.imgCorner2 };
+    }
+    if (state.state === 'MOVE_ONE_CORNER') {
+      return { corner1: state.fixedCorner, corner2: state.movedCorner };
+    }
+    if (state.state === 'MOVE_REGION') {
+      return { corner1: state.newCorner1, corner2: state.newCorner2 };
+    }
+    return null;
   }
 }
