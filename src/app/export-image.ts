@@ -30,10 +30,10 @@ export class ExportImage {
     // convert dataurl to blob
     const imgBlob = this.dataUrlToBlob(finalDataUrl);
     // find a free file name
-    const { exportFolder, iNatFolder } = await FsResolver.resolveExportFolders(imageFile);
-    const outFileName = await FsResolver.findFreeExportFileName(exportFolder, iNatFolder, imageFile.handle.name);
+    const { iNatFolder, iNatNewFolder } = await FsResolver.resolveINatFolders(imageFile);
+    const outFileName = await FsResolver.findFreeExportFileName(iNatFolder, imageFile.handle.name);
     // save cropped image to disk
-    const outFile = await this.writeBlobToFile(imgBlob, exportFolder, outFileName);
+    const outFile = await this.writeBlobToFile(imgBlob, iNatNewFolder, outFileName);
     return outFile;
   }
 
@@ -97,11 +97,11 @@ export class ExportImage {
     return new Blob([typedArray], { type: 'image/jpeg' });
   }
 
-  private async writeBlobToFile(blob: Blob, exportFolder: FsItem<FileSystemDirectoryHandle>, fileName: string) {
-    const fileHandle = await exportFolder.handle.getFileHandle(fileName, { create: true });
+  private async writeBlobToFile(blob: Blob, folder: FsItem<FileSystemDirectoryHandle>, fileName: string) {
+    const fileHandle = await folder.handle.getFileHandle(fileName, { create: true });
     const writable = await fileHandle.createWritable();
     await writable.write(blob);
     await writable.close();
-    return new FsItem(fileHandle, exportFolder);
+    return new FsItem(fileHandle, folder);
   }
 }
