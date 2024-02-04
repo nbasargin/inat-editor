@@ -64,7 +64,10 @@ export class AppComponent {
     for await (const entry of selectedFolder.handle.values()) {
       folderContents.push(new FsItem(entry, selectedFolder));
     }
-    this.folderContents = folderContents;
+    // sort to have folders first
+    const folders = folderContents.filter((item) => item.handle.kind === 'directory');
+    const files = folderContents.filter((item) => item.handle.kind === 'file');
+    this.folderContents = [...folders, ...files];
   }
 
   setSelectedFile(selectedFile: FsItem<FileSystemFileHandle>) {
