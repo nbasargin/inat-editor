@@ -37,7 +37,6 @@ export class ExifUtils {
     const whitelistedIDF0Tags = [
       0x010f, // Exif.Image.Make
       0x0110, // Exif.Image.Model
-      0x0131, // Exif.Image.Software
       0x0132, // Exif.Image.DateTime
     ];
     for (const tag of whitelistedIDF0Tags) {
@@ -96,6 +95,7 @@ export class ExifUtils {
     // write new data to IDF0 tags
     newExif['0th'][0x0100] = imgWidth; // Exif.Image.ImageWidth
     newExif['0th'][0x0101] = imgHeight; // Exif.Image.ImageLength
+    newExif['0th'][0x0131] = `iNat Editor 0.1`; // Exif.Image.Software
 
     return newExif;
   }

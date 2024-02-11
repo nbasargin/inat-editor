@@ -56,8 +56,7 @@ export class ExportImage {
   private createUserComment(minXY: ImageXY, maxXY: ImageXY): string {
     const { imgWidth, imgHeight, imgSize, canvasSize } = this.imgPointsToSize(minXY, maxXY);
     const userComment = {
-      cropSoftware: 'iNat Editor v0.1',
-      cropBox: {
+      cropArea: {
         x: minXY.imgX,
         y: minXY.imgY,
         width: imgWidth,
