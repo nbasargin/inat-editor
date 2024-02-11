@@ -72,7 +72,6 @@ export class AppComponent {
     this.folderContents = [...folders, ...files];
     // allow or disallow cropping
     this.allowCrop = !['iNat', 'iNat_new'].includes(this.selectedFolder.handle.name);
-    console.log(this.allowCrop);
   }
 
   setSelectedFile(selectedFile: FsItem<FileSystemFileHandle>) {
