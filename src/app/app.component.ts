@@ -40,6 +40,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
         ></ie-file-list>
         <ie-image-editor
           [selectedFile]="selectedFile"
+          [allowCrop]="allowCrop"
           (cropImageRegion)="cropImageRegion($event.img, $event.dataUrl, $event.minXY, $event.maxXY)"
         ></ie-image-editor>
       </div>
@@ -52,6 +53,7 @@ export class AppComponent {
   selectedFolder: FsItem<FileSystemDirectoryHandle> | null = null;
   selectedFile: FsItem<FileSystemFileHandle> | null = null;
   folderContents: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>> = [];
+  allowCrop = false;
 
   constructor(private _snackBar: MatSnackBar) {
     this.fileApiSupported = !!window.showOpenFilePicker;
@@ -68,6 +70,9 @@ export class AppComponent {
     const folders = folderContents.filter((item) => item.handle.kind === 'directory');
     const files = folderContents.filter((item) => item.handle.kind === 'file');
     this.folderContents = [...folders, ...files];
+    // allow or disallow cropping
+    this.allowCrop = !['iNat', 'iNat_new'].includes(this.selectedFolder.handle.name);
+    console.log(this.allowCrop);
   }
 
   setSelectedFile(selectedFile: FsItem<FileSystemFileHandle>) {

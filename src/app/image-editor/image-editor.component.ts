@@ -35,7 +35,7 @@ import { RegionSelector } from './region-selector';
         (mouseleave)="mouseLeave($event)"
       ></canvas>
 
-      <div class="button-container" *ngIf="regionSelector && regionSelector.state.state === 'DEFINED'">
+      <div class="button-container" *ngIf="allowCrop && regionSelector && regionSelector.state.state === 'DEFINED'">
         <button mat-raised-button color="warn" (click)="cancelCrop()">Cancel</button>
         <button
           mat-raised-button
@@ -76,6 +76,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('overlayCanvas', { static: true }) overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
 
+  @Input() allowCrop: boolean = false;
+
   // later: refactor to an input that accepts an image or null, not a file handle
   // file handling should happen outside
   @Input() set selectedFile(fsItem: FsItem<FileSystemFileHandle> | null) {
@@ -88,6 +90,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.currentImageDataUrl = null;
     this.coordinates = null;
     this.regionSelector = null;
+    this.infoMessage.next('');
+    this.overlayCanvasRef.nativeElement.style.cursor = 'default';
     if (!fsItem) {
       this.imageLoader = null;
       return;
@@ -105,6 +109,9 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       this.regionSelector = new RegionSelector(img.width, img.height, distThreshold);
       this.resizeCanvasIfNeeded();
       this.redrawImage(img, this.coordinates);
+      if (!this.allowCrop) {
+        this.infoMessage.next('Cropping is disabled in the iNat folder.');
+      }
     });
   }
 
@@ -124,7 +131,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   mouseDown(e: MouseEvent) {
-    if (!this.currentImage || !this.coordinates || !this.regionSelector) {
+    if (!this.allowCrop || !this.currentImage || !this.coordinates || !this.regionSelector) {
       return;
     }
     e.preventDefault();
@@ -134,7 +141,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   mouseMove(e: MouseEvent) {
-    if (!this.currentImage || !this.coordinates || !this.regionSelector) {
+    if (!this.allowCrop || !this.currentImage || !this.coordinates || !this.regionSelector) {
       return;
     }
     const imgXY = this.coordinates.clientToImage(e);
@@ -144,7 +151,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   mouseUp(e: MouseEvent) {
-    if (!this.currentImage || !this.coordinates || !this.regionSelector) {
+    if (!this.allowCrop || !this.currentImage || !this.coordinates || !this.regionSelector) {
       return;
     }
     const imgXY = this.coordinates.clientToImage(e);
@@ -154,7 +161,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   mouseEnter(e: MouseEvent) {
-    if (!this.regionSelector) {
+    if (!this.allowCrop || !this.regionSelector) {
       return;
     }
     const primaryButtonUp = (e.buttons & 1) !== 1;
@@ -166,7 +173,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }
 
   mouseLeave(e: MouseEvent) {
-    if (!this.regionSelector) {
+    if (!this.allowCrop || !this.regionSelector) {
       return;
     }
     const state = this.regionSelector.state;
