@@ -58,7 +58,7 @@ export class CanvasCoordinates {
     return { imgX: boxEndX, imgY: boxEndY };
   }
 
-  imageToCanvas({ imgX, imgY }: ImageXY) {
+  imageToCanvas({ imgX, imgY }: ImageXY): CanvasXY {
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.fitImage();
     const scalingFactorX = scaledImgWidth / this.img.width;
     const scalingFactorY = scaledImgHeight / this.img.height;
@@ -85,7 +85,7 @@ export class CanvasCoordinates {
     };
   }
 
-  getDistanceThreshold() {
+  getDistanceThreshold(): number {
     const c1 = this.clientToCanvas({ clientX: 0, clientY: 0 });
     const c2 = this.clientToCanvas({ clientX: 24, clientY: 0 });
     const i1 = this.canvasToImage(c1);
