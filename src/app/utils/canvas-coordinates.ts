@@ -70,6 +70,9 @@ export class CanvasCoordinates {
     };
   }
 
+  /**
+   * Distance in image pixels to be considered to be "close" to a point
+   */
   getDistanceThreshold(): number {
     const c1 = this.clientToCanvas({ clientX: 0, clientY: 0 });
     const c2 = this.clientToCanvas({ clientX: 24, clientY: 0 });

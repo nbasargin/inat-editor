@@ -1,4 +1,4 @@
-import { ImageXY } from './canvas-coordinates';
+import { CanvasCoordinates, ImageXY } from './canvas-coordinates';
 
 export type RegionSelectorState =
   | {
@@ -32,7 +32,7 @@ export class RegionSelector {
   constructor(
     public imgWidth: number,
     public imgHeight: number,
-    public distThreshold: number, // distance in image pixels to be considered to be "close" to a point
+    public coordinates: CanvasCoordinates,
   ) {}
 
   resetState() {
@@ -200,16 +200,17 @@ export class RegionSelector {
     const cornerNE: ImageXY = { imgX: maxX, imgY: minY };
     const cornerSW: ImageXY = { imgX: minX, imgY: maxY };
     const cornerSE: ImageXY = { imgX: maxX, imgY: maxY };
-    if (this.distance(imageXY, cornerNW) < this.distThreshold) {
+    const distThreshold = this.coordinates.getDistanceThreshold();
+    if (this.distance(imageXY, cornerNW) < distThreshold) {
       return { corner: cornerNW, oppositeCorner: cornerSE, cursor: 'nwse-resize' };
     }
-    if (this.distance(imageXY, cornerNE) < this.distThreshold) {
+    if (this.distance(imageXY, cornerNE) < distThreshold) {
       return { corner: cornerNE, oppositeCorner: cornerSW, cursor: 'nesw-resize' };
     }
-    if (this.distance(imageXY, cornerSW) < this.distThreshold) {
+    if (this.distance(imageXY, cornerSW) < distThreshold) {
       return { corner: cornerSW, oppositeCorner: cornerNE, cursor: 'nesw-resize' };
     }
-    if (this.distance(imageXY, cornerSE) < this.distThreshold) {
+    if (this.distance(imageXY, cornerSE) < distThreshold) {
       return { corner: cornerSE, oppositeCorner: cornerNW, cursor: 'nwse-resize' };
     }
     return null;

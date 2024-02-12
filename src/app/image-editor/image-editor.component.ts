@@ -67,7 +67,6 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     if (this.imageState) {
       this.redrawImage();
       this.redrawOverlay();
-      this.imageState.regionSelector.distThreshold = this.imageState.coordinates.getDistanceThreshold();
     }
   });
 
@@ -83,8 +82,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       this.imageState = null;
     } else {
       const coordinates = new CanvasCoordinates(this.overlayCanvasRef.nativeElement, data.image);
-      const distThreshold = coordinates.getDistanceThreshold();
-      const regionSelector = new RegionSelector(data.image.width, data.image.height, distThreshold);
+      const regionSelector = new RegionSelector(data.image.width, data.image.height, coordinates);
       this.imageState = {
         fsItem: data.fsItem,
         image: data.image,
@@ -95,7 +93,6 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
     // update everything
     this.overlayCanvasRef.nativeElement.style.cursor = 'default';
-    this.infoMessage.next(this.allowCrop ? '' : 'Cropping is disabled in the iNat folder.');
     this.resizeCanvasIfNeeded();
     this.redrawOverlay();
     this.redrawImage();
