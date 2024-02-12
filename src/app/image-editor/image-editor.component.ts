@@ -17,6 +17,7 @@ import { CanvasDraw } from '../utils/canvas-draw';
 import { Subject } from 'rxjs';
 import { RegionSelector } from '../utils/region-selector';
 import { FileImageData, RelatedImagesData } from '../utils/image-loader-3';
+import { CropArea } from '../utils/user-comment-data';
 
 interface ImageEditorState {
   fsItem: FsItem<FileSystemFileHandle>;
@@ -50,10 +51,6 @@ interface ImageEditorState {
         <button mat-raised-button color="warn" (click)="cancelCrop()">Cancel</button>
         <button mat-raised-button color="primary" (click)="cropImage()">Crop Image</button>
       </div>
-
-      <div class="info-container" *ngIf="infoMessage | async as msg">
-        {{ msg }}
-      </div>
     </div>
   `,
   styleUrl: 'image-editor.component.scss',
@@ -69,8 +66,6 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       this.redrawOverlay();
     }
   });
-
-  infoMessage = new Subject<string>();
 
   @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('overlayCanvas', { static: true }) overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
@@ -106,6 +101,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     minXY: ImageXY;
     maxXY: ImageXY;
   }>();
+
+  @Output() selectCropArea = new EventEmitter<CropArea | null>();
 
   ngOnInit(): void {
     this.resizeObserver.observe(this.imageCanvasRef.nativeElement);
@@ -165,7 +162,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     if (state.state === 'MOVE_ONE_CORNER' || state.state == 'MOVE_REGION') {
       const { overlay, overlayCtx } = this.getOverlayAndContext();
       CanvasDraw.clearCanvas(overlayCtx, overlay);
-      this.infoMessage.next('');
+      this.selectCropArea.next(null);
     }
   }
 
@@ -240,7 +237,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     CanvasDraw.clearCanvas(overlayCtx, overlay);
     const region = this.getRegionSelectorArea();
     if (!this.imageState || !region) {
-      this.infoMessage.next(this.allowCrop ? '' : 'Cropping is disabled in the iNat folder.');
+      this.selectCropArea.next(null);
       return;
     }
     // outline
@@ -254,7 +251,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const y = Math.min(region.corner1.imgY, region.corner2.imgY);
     const width = Math.abs(region.corner1.imgX - region.corner2.imgX);
     const height = Math.abs(region.corner1.imgY - region.corner2.imgY);
-    this.infoMessage.next(`X ${x}; Y ${y}; W ${width}; H ${height}`);
+    this.selectCropArea.next({ x, y, width, height });
   }
 
   private getRegionSelectorArea() {

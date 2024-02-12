@@ -1,0 +1,15 @@
+:host {
+  background: white;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: baseline;
+  height: 44px;
+  padding: 4px 8px;
+  gap: 4px;
+  line-height: 36px;
+}
+
+.right-align {
+  text-align: right;
+  flex-grow: 1;
+}

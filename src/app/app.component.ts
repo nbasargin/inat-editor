@@ -9,6 +9,8 @@ import { FsItem } from './utils/fs-item';
 import { ImageXY } from './utils/canvas-coordinates';
 import { ExportImage } from './utils/export-image';
 import { FileImageData, ImageLoader3, RelatedImagesData } from './utils/image-loader-3';
+import { InfoBarComponent } from './info-bar/info-bar.component';
+import { CropArea } from './utils/user-comment-data';
 
 @Component({
   selector: 'ie-root',
@@ -19,6 +21,7 @@ import { FileImageData, ImageLoader3, RelatedImagesData } from './utils/image-lo
     FolderSelectorComponent,
     FileListComponent,
     ImageEditorComponent,
+    InfoBarComponent,
   ],
   template: `
     <ie-file-access-not-supported *ngIf="!fileApiSupported"></ie-file-access-not-supported>
@@ -27,24 +30,32 @@ import { FileImageData, ImageLoader3, RelatedImagesData } from './utils/image-lo
         [selectedFolder]="selectedFolder"
         [selectedFile]="selectedFile"
         (folderSelected)="setSelectedFolder($event)"
-        class="main-header"
+        class="folder-selector"
       ></ie-folder-selector>
-      <div class="main-content">
+      <ng-container *ngIf="selectedFolder">
         <ie-file-list
           [fileList]="folderContents"
           [selectedFile]="selectedFile"
           [parentFolder]="selectedFolder ? selectedFolder.parent : null"
           (fileSelected)="setSelectedFile($event)"
           (folderSelected)="setSelectedFolder($event)"
-          class="side-panel"
+          class="files"
         ></ie-file-list>
         <ie-image-editor
           [imageData]="imageData | async"
           [relatedImagesData]="relatedImagesData | async"
           [allowCrop]="allowCrop"
           (cropImageRegion)="cropImageRegion($event.data, $event.minXY, $event.maxXY)"
+          (selectCropArea)="selectedCropArea = $event"
+          class="editor"
         ></ie-image-editor>
-      </div>
+        <ie-info-bar
+          [allowCrop]="allowCrop"
+          [relatedImagesData]="relatedImagesData | async"
+          [selectedCropArea]="selectedCropArea"
+          class="info"
+        ></ie-info-bar>
+      </ng-container>
     </div>
   `,
   styleUrl: 'app.component.scss',
@@ -57,6 +68,7 @@ export class AppComponent {
   imageData: Promise<FileImageData> | null = null;
   relatedImagesData: Promise<RelatedImagesData> | null = null;
   allowCrop = false;
+  selectedCropArea: CropArea | null = null;
 
   constructor(private _snackBar: MatSnackBar) {
     this.fileApiSupported = !!window.showOpenFilePicker;
