@@ -8,7 +8,7 @@ import { ImageEditorComponent } from './image-editor/image-editor.component';
 import { FsItem } from './fs-item';
 import { ImageXY } from './canvas-coordinates';
 import { ExportImage } from './export-image';
-import { RelatedImagesResolver } from './related-images-resolver';
+import { FileImageData, ImageLoader3, RelatedImagesData } from './image-loader-3';
 
 @Component({
   selector: 'ie-root',
@@ -39,9 +39,10 @@ import { RelatedImagesResolver } from './related-images-resolver';
           class="side-panel"
         ></ie-file-list>
         <ie-image-editor
-          [selectedFile]="selectedFile"
+          [imageData]="imageData | async"
+          [relatedImagesData]="relatedImagesData | async"
           [allowCrop]="allowCrop"
-          (cropImageRegion)="cropImageRegion($event.img, $event.dataUrl, $event.minXY, $event.maxXY)"
+          (cropImageRegion)="cropImageRegion($event.data, $event.minXY, $event.maxXY)"
         ></ie-image-editor>
       </div>
     </div>
@@ -53,6 +54,8 @@ export class AppComponent {
   selectedFolder: FsItem<FileSystemDirectoryHandle> | null = null;
   selectedFile: FsItem<FileSystemFileHandle> | null = null;
   folderContents: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>> = [];
+  imageData: Promise<FileImageData> | null = null;
+  relatedImagesData: Promise<RelatedImagesData> | null = null;
   allowCrop = false;
 
   constructor(private _snackBar: MatSnackBar) {
@@ -62,6 +65,8 @@ export class AppComponent {
   async setSelectedFolder(selectedFolder: FsItem<FileSystemDirectoryHandle>) {
     this.selectedFolder = selectedFolder;
     this.selectedFile = null;
+    this.imageData = null;
+    this.relatedImagesData = null;
     const folderContents: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>> = [];
     for await (const entry of selectedFolder.handle.values()) {
       folderContents.push(new FsItem(entry, selectedFolder));
@@ -76,21 +81,14 @@ export class AppComponent {
 
   setSelectedFile(selectedFile: FsItem<FileSystemFileHandle>) {
     this.selectedFile = selectedFile;
-
-    const cropAreas = new RelatedImagesResolver(selectedFile).asyncRelatedData;
-
-    cropAreas.then((relatedImages) => {
-      console.log(selectedFile.handle.name, relatedImages);
-    });
+    this.imageData = ImageLoader3.createImage(selectedFile);
+    this.relatedImagesData = ImageLoader3.readRelatedImagesData(selectedFile);
   }
 
-  cropImageRegion(img: HTMLImageElement, dataUrl: string, minXY: ImageXY, maxXY: ImageXY) {
-    if (!this.selectedFile) {
-      return;
-    }
+  cropImageRegion(data: FileImageData, minXY: ImageXY, maxXY: ImageXY) {
     const exporter = new ExportImage();
     exporter
-      .exportImage(this.selectedFile, img, dataUrl, minXY, maxXY)
+      .exportImage(data.fsItem, data.image, data.dataURL, minXY, maxXY)
       .then((file) => {
         const filePath = file
           .getFullPath()
