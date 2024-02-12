@@ -1,4 +1,4 @@
-import { ImageXY } from '../canvas-coordinates';
+import { ImageXY } from './canvas-coordinates';
 
 export type RegionSelectorState =
   | {

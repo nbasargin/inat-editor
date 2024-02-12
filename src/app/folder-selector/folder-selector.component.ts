@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { FsItem } from '../fs-item';
+import { FsItem } from '../utils/fs-item';
 
 @Component({
   selector: 'ie-folder-selector',

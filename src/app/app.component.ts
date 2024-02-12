@@ -5,10 +5,10 @@ import { FileListComponent } from './file-list/file-list.component';
 import { FileAccessNotSupportedComponent } from './file-access-not-supported/file-access-not-supported.component';
 import { FolderSelectorComponent } from './folder-selector/folder-selector.component';
 import { ImageEditorComponent } from './image-editor/image-editor.component';
-import { FsItem } from './fs-item';
-import { ImageXY } from './canvas-coordinates';
-import { ExportImage } from './export-image';
-import { FileImageData, ImageLoader3, RelatedImagesData } from './image-loader-3';
+import { FsItem } from './utils/fs-item';
+import { ImageXY } from './utils/canvas-coordinates';
+import { ExportImage } from './utils/export-image';
+import { FileImageData, ImageLoader3, RelatedImagesData } from './utils/image-loader-3';
 
 @Component({
   selector: 'ie-root',

@@ -11,12 +11,12 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { FsItem } from '../fs-item';
-import { CanvasCoordinates, ImageXY } from '../canvas-coordinates';
-import { CanvasDraw } from '../canvas-draw';
+import { FsItem } from '../utils/fs-item';
+import { CanvasCoordinates, ImageXY } from '../utils/canvas-coordinates';
+import { CanvasDraw } from '../utils/canvas-draw';
 import { Subject } from 'rxjs';
-import { RegionSelector } from './region-selector';
-import { FileImageData, RelatedImagesData } from '../image-loader-3';
+import { RegionSelector } from '../utils/region-selector';
+import { FileImageData, RelatedImagesData } from '../utils/image-loader-3';
 
 interface ImageEditorState {
   fsItem: FsItem<FileSystemFileHandle>;
