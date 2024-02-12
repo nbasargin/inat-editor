@@ -108,6 +108,10 @@ export class AppComponent {
           .join('/');
         this.showMessage(`Exported image to "${filePath}"`);
         console.log(`Exported image to "${filePath}"`);
+        if (this.selectedFile) {
+          // update crop boxes, not very efficient but refreshes everything
+          this.relatedImagesData = ImageLoader3.readRelatedImagesData(this.selectedFile);
+        }
       })
       .catch((e) => {
         this.showMessage('Could not export selected image region!');
