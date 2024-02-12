@@ -13,6 +13,9 @@ export interface ImageXY {
   imgY: number;
 }
 
+/**
+ * Coordinate transformations: client -> canvas <-> image
+ */
 export class CanvasCoordinates {
   constructor(
     public canvas: HTMLCanvasElement,
@@ -38,24 +41,6 @@ export class CanvasCoordinates {
 
   clientToImage(clientXY: ClientXY) {
     return this.canvasToImage(this.clientToCanvas(clientXY));
-  }
-
-  // allow values from 0 to width/height (including)
-  clipImageCoords({ imgX, imgY }: ImageXY): ImageXY {
-    imgX = Math.min(this.img.width, Math.max(0, imgX));
-    imgY = Math.min(this.img.height, Math.max(0, imgY));
-    return { imgX, imgY };
-  }
-
-  // inputs: corner1 within the image, anotherPoint any point (can be outside, in image coordinates)
-  constrainSecondCorner(corner1: ImageXY, anotherPoint: ImageXY): ImageXY {
-    const clipImgEnd = this.clipImageCoords(anotherPoint);
-    const width = clipImgEnd.imgX - corner1.imgX;
-    const height = clipImgEnd.imgY - corner1.imgY;
-    const maxSize = Math.min(Math.abs(width), Math.abs(height));
-    const boxEndX = corner1.imgX + maxSize * Math.sign(width);
-    const boxEndY = corner1.imgY + maxSize * Math.sign(height);
-    return { imgX: boxEndX, imgY: boxEndY };
   }
 
   imageToCanvas({ imgX, imgY }: ImageXY): CanvasXY {
