@@ -1,7 +1,7 @@
 import { ExifUtils } from './exif-utils';
 import { FsItem } from './fs-item';
 import { FsResolver } from './fs-resolver';
-import { CropArea, UserCommenData } from './user-comment-data';
+import { CropArea, UserCommentData } from './user-comment-data';
 
 export interface FileImageData {
   fsItem: FsItem<FileSystemFileHandle>;
@@ -64,7 +64,7 @@ export class ImageLoader3 {
       const dataURL = await ImageLoader3.readImageDataURL(image.handle);
       const exif = ExifUtils.readExifFromDataUrl(dataURL);
       const userCommentAscii = exif.Exif[0x9286]; // Exif.Photo.UserComment
-      let userComment: UserCommenData | null = null;
+      let userComment: UserCommentData | null = null;
       try {
         userComment = JSON.parse(userCommentAscii);
       } catch (e) {

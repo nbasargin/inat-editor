@@ -4,7 +4,7 @@ export interface CropArea {
   width: number;
   height: number;
 }
-export interface UserCommenData {
+export interface UserCommentData {
   cropArea: CropArea;
   downscaled: boolean;
   jpegExportQuality: number;

@@ -3,7 +3,7 @@ import { ImageXY } from './canvas-coordinates';
 import { ExifUtils } from './exif-utils';
 import { FsItem } from './fs-item';
 import { FsResolver } from './fs-resolver';
-import { UserCommenData } from './user-comment-data';
+import { UserCommentData } from './user-comment-data';
 
 export class ExportImage {
   constructor(
@@ -56,7 +56,7 @@ export class ExportImage {
 
   private createUserComment(minXY: ImageXY, maxXY: ImageXY): string {
     const { imgWidth, imgHeight, imgSize, canvasSize } = this.imgPointsToSize(minXY, maxXY);
-    const userComment: UserCommenData = {
+    const userComment: UserCommentData = {
       cropArea: {
         x: minXY.imgX,
         y: minXY.imgY,
