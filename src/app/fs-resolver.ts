@@ -52,8 +52,9 @@ export class FsResolver {
     const namesLowercase = new Set([...fileNames].map((name) => name.toLowerCase()));
     // find a free file name: append '_iNat', '_iNat_2', ... to the name until a free one is found
     const fileNameNoExt = FsResolver.removeFileExtension(originalFileName);
+    const fileNameClean = FsResolver.removeBackupSuffix(fileNameNoExt);
     for (let i = 1; i < 10000; i++) {
-      const newFileName = i == 1 ? `${fileNameNoExt}_iNat.jpg` : `${fileNameNoExt}_iNat_${i}.jpg`;
+      const newFileName = i == 1 ? `${fileNameClean}_iNat.jpg` : `${fileNameClean}_iNat_${i}.jpg`;
       if (!namesLowercase.has(newFileName.toLowerCase())) {
         return newFileName;
       }
@@ -67,8 +68,8 @@ export class FsResolver {
     originalFileName: string,
   ): Promise<Array<FsItem<FileSystemFileHandle>>> {
     const fileNameNoExt = FsResolver.removeFileExtension(originalFileName);
-    const fileNameClean = fileNameNoExt.replace('_iNat_backup', '');
-    const matchingRegEx = new RegExp(`${fileNameClean}_iNat(_\d*)?\.jpg`, 'i');
+    const fileNameClean = FsResolver.removeBackupSuffix(fileNameNoExt);
+    const matchingRegEx = new RegExp(`${fileNameClean}_iNat(_\\d+)?.jpg`, 'i');
     const relatedImages: Array<FsItem<FileSystemFileHandle>> = [];
     for await (let handle of folder.handle.values()) {
       if (handle.kind === 'file' && matchingRegEx.test(handle.name)) {
@@ -94,5 +95,9 @@ export class FsResolver {
 
   private static removeFileExtension(fileName: string): string {
     return fileName.replace(/\.[^/.]+$/, '');
+  }
+
+  private static removeBackupSuffix(fileName: string): string {
+    return fileName.replace('_iNat_backup', '');
   }
 }

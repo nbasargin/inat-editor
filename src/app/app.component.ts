@@ -1,14 +1,14 @@
 import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { FileListComponent } from './file-list/file-list.component';
 import { FileAccessNotSupportedComponent } from './file-access-not-supported/file-access-not-supported.component';
 import { FolderSelectorComponent } from './folder-selector/folder-selector.component';
 import { ImageEditorComponent } from './image-editor/image-editor.component';
-
 import { FsItem } from './fs-item';
 import { ImageXY } from './canvas-coordinates';
 import { ExportImage } from './export-image';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { RelatedImagesResolver } from './related-images-resolver';
 
 @Component({
   selector: 'ie-root',
@@ -76,6 +76,12 @@ export class AppComponent {
 
   setSelectedFile(selectedFile: FsItem<FileSystemFileHandle>) {
     this.selectedFile = selectedFile;
+
+    const cropAreas = new RelatedImagesResolver(selectedFile).asyncRelatedData;
+
+    cropAreas.then((relatedImages) => {
+      console.log(selectedFile.handle.name, relatedImages);
+    });
   }
 
   cropImageRegion(img: HTMLImageElement, dataUrl: string, minXY: ImageXY, maxXY: ImageXY) {
