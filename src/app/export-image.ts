@@ -3,6 +3,7 @@ import { ImageXY } from './canvas-coordinates';
 import { ExifUtils } from './exif-utils';
 import { FsItem } from './fs-item';
 import { FsResolver } from './fs-resolver';
+import { UserCommenData } from './user-comment-data';
 
 export class ExportImage {
   constructor(
@@ -30,7 +31,7 @@ export class ExportImage {
     // convert dataurl to blob
     const imgBlob = this.dataUrlToBlob(finalDataUrl);
     // find a free file name
-    const { iNatFolder, iNatNewFolder } = await FsResolver.resolveINatFolders(imageFile);
+    const { iNatFolder, iNatNewFolder } = await FsResolver.createINatFolders(imageFile);
     const outFileName = await FsResolver.findFreeExportFileName(iNatFolder, imageFile.handle.name);
     // save cropped image to disk
     const outFile = await this.writeBlobToFile(imgBlob, iNatNewFolder, outFileName);
@@ -55,7 +56,7 @@ export class ExportImage {
 
   private createUserComment(minXY: ImageXY, maxXY: ImageXY): string {
     const { imgWidth, imgHeight, imgSize, canvasSize } = this.imgPointsToSize(minXY, maxXY);
-    const userComment = {
+    const userComment: UserCommenData = {
       cropArea: {
         x: minXY.imgX,
         y: minXY.imgY,

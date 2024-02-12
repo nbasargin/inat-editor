@@ -1,7 +1,7 @@
 import { FsItem } from './fs-item';
 
 export class FsResolver {
-  static async resolveINatFolders(imageFile: FsItem<FileSystemFileHandle>): Promise<{
+  static async createINatFolders(imageFile: FsItem<FileSystemFileHandle>): Promise<{
     iNatFolder: FsItem<FileSystemDirectoryHandle>;
     iNatNewFolder: FsItem<FileSystemDirectoryHandle>;
   }> {
@@ -17,6 +17,32 @@ export class FsResolver {
     return { iNatFolder, iNatNewFolder };
   }
 
+  static async findINatFolders(imageFile: FsItem<FileSystemFileHandle>): Promise<{
+    iNatFolder: FsItem<FileSystemDirectoryHandle> | null;
+    iNatNewFolder: FsItem<FileSystemDirectoryHandle> | null;
+  }> {
+    const imageFolder = imageFile.parent;
+    if (!imageFolder) {
+      throw new Error('Image file has no folder specified');
+    }
+    // iNat folder
+    let iNatFolderHandle = null;
+    try {
+      iNatFolderHandle = await imageFolder.handle.getDirectoryHandle('iNat');
+    } catch (e) {}
+    const iNatFolder = iNatFolderHandle ? new FsItem(iNatFolderHandle, imageFolder) : null;
+    // iNat_new folder
+    let iNatNewFolderHandle = null;
+    if (iNatFolderHandle)
+      try {
+        iNatNewFolderHandle = await iNatFolderHandle.getDirectoryHandle('iNat_new');
+      } catch (e) {}
+    const iNatNewFolder = iNatNewFolderHandle
+      ? new FsItem<FileSystemDirectoryHandle>(iNatNewFolderHandle, imageFolder)
+      : null;
+    return { iNatFolder, iNatNewFolder };
+  }
+
   static async findFreeExportFileName(
     iNatFolder: FsItem<FileSystemDirectoryHandle>,
     originalFileName: string,
@@ -25,7 +51,7 @@ export class FsResolver {
     const fileNames = await FsResolver.recursivelyGetFileNames(iNatFolder.handle);
     const namesLowercase = new Set([...fileNames].map((name) => name.toLowerCase()));
     // find a free file name: append '_iNat', '_iNat_2', ... to the name until a free one is found
-    const fileNameNoExt = originalFileName.replace(/\.[^/.]+$/, '');
+    const fileNameNoExt = FsResolver.removeFileExtension(originalFileName);
     for (let i = 1; i < 10000; i++) {
       const newFileName = i == 1 ? `${fileNameNoExt}_iNat.jpg` : `${fileNameNoExt}_iNat_${i}.jpg`;
       if (!namesLowercase.has(newFileName.toLowerCase())) {
@@ -34,6 +60,22 @@ export class FsResolver {
     }
     // could not find a free name
     throw new Error(`Could not find a suitable filename for ${originalFileName} in ${iNatFolder.handle.name}`);
+  }
+
+  static async findRelatedImages(
+    folder: FsItem<FileSystemDirectoryHandle>,
+    originalFileName: string,
+  ): Promise<Array<FsItem<FileSystemFileHandle>>> {
+    const fileNameNoExt = FsResolver.removeFileExtension(originalFileName);
+    const fileNameClean = fileNameNoExt.replace('_iNat_backup', '');
+    const matchingRegEx = new RegExp(`${fileNameClean}_iNat(_\d*)?\.jpg`, 'i');
+    const relatedImages: Array<FsItem<FileSystemFileHandle>> = [];
+    for await (let handle of folder.handle.values()) {
+      if (handle.kind === 'file' && matchingRegEx.test(handle.name)) {
+        relatedImages.push(new FsItem(handle, folder));
+      }
+    }
+    return relatedImages;
   }
 
   private static async recursivelyGetFileNames(folderHandle: FileSystemDirectoryHandle): Promise<Set<string>> {
@@ -48,5 +90,9 @@ export class FsResolver {
       }
     }
     return fileNames;
+  }
+
+  private static removeFileExtension(fileName: string): string {
+    return fileName.replace(/\.[^/.]+$/, '');
   }
 }
