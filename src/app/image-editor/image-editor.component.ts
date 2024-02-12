@@ -16,8 +16,7 @@ import { CanvasCoordinates, ImageXY } from '../canvas-coordinates';
 import { CanvasDraw } from '../canvas-draw';
 import { Subject } from 'rxjs';
 import { RegionSelector } from './region-selector';
-import { RelatedImagesData } from '../related-images-resolver';
-import { FileImageData } from '../image-loader-3';
+import { FileImageData, RelatedImagesData } from '../image-loader-3';
 
 interface ImageEditorState {
   fsItem: FsItem<FileSystemFileHandle>;
