@@ -58,6 +58,7 @@ interface ImageEditorState {
 })
 export class ImageEditorComponent implements OnInit, OnDestroy {
   imageState: ImageEditorState | null = null;
+  relatedImages: RelatedImagesData | null = null;
 
   resizeObserver = new ResizeObserver(() => {
     this.resizeCanvasIfNeeded();
@@ -93,7 +94,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.redrawImage();
   }
   @Input() set relatedImagesData(data: RelatedImagesData | null) {
-    // todo
+    this.relatedImages = data;
+    this.redrawImage();
   }
 
   @Output() cropImageRegion = new EventEmitter<{
@@ -230,6 +232,17 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const { canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight } = this.imageState.coordinates.fitImage();
     CanvasDraw.clearCanvas(ctx, canvas);
     ctx.drawImage(this.imageState.image, canvasLeft, canvasTop, scaledImgWidth, scaledImgHeight);
+    // related images bounding boxes
+    if (!this.relatedImages) {
+      return;
+    }
+
+    for (const cropArea of this.relatedImages.cropAreas) {
+      const { x, y, width, height } = cropArea;
+      const c1 = this.imageState.coordinates.imageToCanvas({ imgX: x, imgY: y });
+      const c2 = this.imageState.coordinates.imageToCanvas({ imgX: x + width, imgY: y + height });
+      CanvasDraw.drawDashedBox(ctx, c1.canvasX, c1.canvasY, c2.canvasX, c2.canvasY);
+    }
   }
 
   redrawOverlay() {
