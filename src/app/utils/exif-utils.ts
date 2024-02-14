@@ -95,7 +95,7 @@ export class ExifUtils {
     // write new data to IDF0 tags
     newExif['0th'][0x0100] = imgWidth; // Exif.Image.ImageWidth
     newExif['0th'][0x0101] = imgHeight; // Exif.Image.ImageLength
-    newExif['0th'][0x0131] = `iNat Editor 0.1`; // Exif.Image.Software
+    newExif['0th'][0x0131] = `iNat Editor 1.0`; // Exif.Image.Software
 
     return newExif;
   }
