@@ -14,7 +14,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { FsItem } from '../utils/fs-item';
 import { CanvasCoordinates, ImageXY } from '../utils/canvas-coordinates';
 import { CanvasDraw } from '../utils/canvas-draw';
-import { Subject } from 'rxjs';
 import { RegionSelector } from '../utils/region-selector';
 import { FileImageData, RelatedImagesData } from '../utils/image-loader-3';
 import { CropArea } from '../utils/user-comment-data';
@@ -59,39 +58,14 @@ interface ImageEditorState {
 export class ImageEditorComponent implements OnInit, OnDestroy {
   imageState: ImageEditorState | null = null;
   relatedImages: RelatedImagesData | null = null;
-
-  resizeObserver = new ResizeObserver(() => {
-    this.resizeCanvasIfNeeded();
-    if (this.imageState) {
-      this.redrawImage();
-      this.redrawOverlay();
-    }
-  });
+  resizeObserver = new ResizeObserver(() => this.canvasResize());
 
   @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('overlayCanvas', { static: true }) overlayCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   @Input() allowCrop: boolean = false;
-
   @Input() set imageData(data: FileImageData | null) {
-    if (!data) {
-      this.imageState = null;
-    } else {
-      const coordinates = new CanvasCoordinates(this.overlayCanvasRef.nativeElement, data.image);
-      const regionSelector = new RegionSelector(data.image.width, data.image.height, coordinates);
-      this.imageState = {
-        fsItem: data.fsItem,
-        image: data.image,
-        dataURL: data.dataURL,
-        coordinates: coordinates,
-        regionSelector: regionSelector,
-      };
-    }
-    // update everything
-    this.overlayCanvasRef.nativeElement.style.cursor = 'default';
-    this.resizeCanvasIfNeeded();
-    this.redrawOverlay();
-    this.redrawImage();
+    this.initializeImage(data);
   }
   @Input() set relatedImagesData(data: RelatedImagesData | null) {
     this.relatedImages = data;
@@ -103,7 +77,6 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     minXY: ImageXY;
     maxXY: ImageXY;
   }>();
-
   @Output() selectCropArea = new EventEmitter<CropArea | null>();
 
   ngOnInit(): void {
@@ -168,8 +141,37 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  private canvasResize() {
+    this.resizeCanvasIfNeeded();
+    if (this.imageState) {
+      this.redrawImage();
+      this.redrawOverlay();
+    }
+  }
+
+  private initializeImage(data: FileImageData | null) {
+    if (!data) {
+      this.imageState = null;
+    } else {
+      const coordinates = new CanvasCoordinates(this.overlayCanvasRef.nativeElement, data.image);
+      const regionSelector = new RegionSelector(data.image.width, data.image.height, coordinates);
+      this.imageState = {
+        fsItem: data.fsItem,
+        image: data.image,
+        dataURL: data.dataURL,
+        coordinates: coordinates,
+        regionSelector: regionSelector,
+      };
+    }
+    // update everything
+    this.overlayCanvasRef.nativeElement.style.cursor = 'default';
+    this.resizeCanvasIfNeeded();
+    this.redrawOverlay();
+    this.redrawImage();
+  }
+
   cropImage() {
-    if (!this.imageState || this.imageState.regionSelector.state.state !== 'DEFINED') {
+    if (!this.allowCrop || !this.imageState || this.imageState.regionSelector.state.state !== 'DEFINED') {
       return;
     }
     const { fsItem, image, dataURL } = this.imageState;
@@ -194,7 +196,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.redrawOverlay();
   }
 
-  resizeCanvasIfNeeded() {
+  private resizeCanvasIfNeeded() {
     if (!this.imageCanvasRef || !this.overlayCanvasRef) {
       return;
     }
@@ -211,19 +213,19 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  getCanvasAndContext() {
+  private getCanvasAndContext() {
     const canvas = this.imageCanvasRef.nativeElement;
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D; // should never be null in this case
     return { canvas, ctx };
   }
 
-  getOverlayAndContext() {
+  private getOverlayAndContext() {
     const overlay = this.overlayCanvasRef.nativeElement;
     const overlayCtx = overlay.getContext('2d') as CanvasRenderingContext2D; // should never be null in this case
     return { overlay, overlayCtx };
   }
 
-  redrawImage() {
+  private redrawImage() {
     const { canvas, ctx } = this.getCanvasAndContext();
     CanvasDraw.clearCanvas(ctx, canvas);
     if (!this.imageState) {
@@ -245,7 +247,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  redrawOverlay() {
+  private redrawOverlay() {
     const { overlay, overlayCtx } = this.getOverlayAndContext();
     CanvasDraw.clearCanvas(overlayCtx, overlay);
     const region = this.getRegionSelectorArea();
