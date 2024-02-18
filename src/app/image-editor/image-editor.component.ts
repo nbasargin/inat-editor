@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  HostListener,
   Input,
   OnDestroy,
   OnInit,
@@ -78,6 +79,13 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     maxXY: ImageXY;
   }>();
   @Output() selectCropArea = new EventEmitter<CropArea | null>();
+
+  @HostListener('document:keydown', ['$event']) keydown(event: KeyboardEvent) {
+    if (event.key !== 'Enter') {
+      return;
+    }
+    this.cropImage();
+  }
 
   ngOnInit(): void {
     this.resizeObserver.observe(this.imageCanvasRef.nativeElement);
