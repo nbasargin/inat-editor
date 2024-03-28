@@ -21,9 +21,9 @@ export class ExportImage {
     // read exif data for original dataurl
     const originalExif: ExifObject = ExifUtils.readExifFromDataUrl(imgDataUrl);
     // create new exif with selected tags, correct dimensions, and a user comment with some metadata
-    const { imgWidth, imgHeight } = this.imgPointsToSize(minXY, maxXY);
+    const { canvasSize } = this.imgPointsToSize(minXY, maxXY);
     const usercommentAscii = this.createUserComment(minXY, maxXY);
-    const newExif: ExifObject = ExifUtils.createNewExif(originalExif, imgWidth, imgHeight, usercommentAscii);
+    const newExif: ExifObject = ExifUtils.createNewExif(originalExif, canvasSize, canvasSize, usercommentAscii);
     // crop image to dataurl
     const croppedImageDataUrl = this.cropImageToDataUrl(img, minXY, maxXY);
     // write modified exif into croppedImage dataurl
@@ -46,22 +46,17 @@ export class ExportImage {
     }
     const imgSize = imgWidth;
     const canvasSize = Math.min(imgWidth, this.maxCropSize);
-    return {
-      imgWidth,
-      imgHeight,
-      imgSize,
-      canvasSize,
-    };
+    return { imgSize, canvasSize };
   }
 
   private createUserComment(minXY: ImageXY, maxXY: ImageXY): string {
-    const { imgWidth, imgHeight, imgSize, canvasSize } = this.imgPointsToSize(minXY, maxXY);
+    const { imgSize, canvasSize } = this.imgPointsToSize(minXY, maxXY);
     const userComment: UserCommentData = {
       cropArea: {
         x: minXY.imgX,
         y: minXY.imgY,
-        width: imgWidth,
-        height: imgHeight,
+        width: imgSize,
+        height: imgSize,
       },
       downscaled: imgSize > canvasSize,
       jpegExportQuality: this.jpegExportQuality,
