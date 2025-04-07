@@ -6,8 +6,10 @@ export type RegionSelectorState =
     }
   | {
       state: 'MOVE_ONE_CORNER';
-      fixedCorner: ImageXY;
-      movedCorner: ImageXY;
+      fixedCorner: ImageXY; // corner that is not moved
+      oldMovedCorner: ImageXY; // start position of the moved corner
+      newMovedCorner: ImageXY; // current position of the moved corner
+      mouseDownCoords: ImageXY; // position of the mouse when the corner was clicked
     }
   | {
       state: 'MOVE_REGION';
@@ -45,7 +47,9 @@ export class RegionSelector {
       this.state = {
         state: 'MOVE_ONE_CORNER',
         fixedCorner: imgCoord,
-        movedCorner: imgCoord,
+        oldMovedCorner: imgCoord,
+        newMovedCorner: imgCoord,
+        mouseDownCoords: imgCoord,
       };
     } else if (this.state.state === 'DEFINED') {
       const closeCorner = this.getCloseCorner(this.state.imgCorner1, this.state.imgCorner2, imageXY);
@@ -54,7 +58,9 @@ export class RegionSelector {
         this.state = {
           state: 'MOVE_ONE_CORNER',
           fixedCorner: closeCorner.oppositeCorner,
-          movedCorner: closeCorner.corner,
+          oldMovedCorner: closeCorner.corner,
+          newMovedCorner: closeCorner.corner,
+          mouseDownCoords: imageXY,
         };
       } else if (this.isWithinRegion(this.state.imgCorner1, this.state.imgCorner2, imageXY)) {
         // mouse down inside the selected region
@@ -74,11 +80,16 @@ export class RegionSelector {
 
   mouseMove(imageXY: ImageXY) {
     if (this.state.state === 'MOVE_ONE_CORNER') {
-      const corner2 = this.constrainSecondCorner(this.state.fixedCorner, imageXY);
+      const dx = imageXY.imgX - this.state.mouseDownCoords.imgX;
+      const dy = imageXY.imgY - this.state.mouseDownCoords.imgY;
+      const movedCornerDxy = { imgX: this.state.oldMovedCorner.imgX + dx, imgY: this.state.oldMovedCorner.imgY + dy };
+      const newMovedCorner = this.constrainSecondCorner(this.state.fixedCorner, movedCornerDxy);
       this.state = {
         state: 'MOVE_ONE_CORNER',
         fixedCorner: this.state.fixedCorner,
-        movedCorner: corner2,
+        oldMovedCorner: this.state.oldMovedCorner,
+        newMovedCorner: newMovedCorner,
+        mouseDownCoords: this.state.mouseDownCoords,
       };
     } else if (this.state.state === 'MOVE_REGION') {
       const { oldCorner1, oldCorner2, mouseDownCoords } = this.state;
@@ -93,8 +104,11 @@ export class RegionSelector {
 
   mouseUp(imageXY: ImageXY) {
     if (this.state.state === 'MOVE_ONE_CORNER') {
-      const corner2 = this.constrainSecondCorner(this.state.fixedCorner, imageXY);
-      const imgBoxWidth = Math.abs(this.state.fixedCorner.imgX - corner2.imgX);
+      const dx = imageXY.imgX - this.state.mouseDownCoords.imgX;
+      const dy = imageXY.imgY - this.state.mouseDownCoords.imgY;
+      const movedCornerDxy = { imgX: this.state.oldMovedCorner.imgX + dx, imgY: this.state.oldMovedCorner.imgY + dy };
+      const newMovedCorner = this.constrainSecondCorner(this.state.fixedCorner, movedCornerDxy);
+      const imgBoxWidth = Math.abs(this.state.fixedCorner.imgX - newMovedCorner.imgX);
       if (imgBoxWidth < 5) {
         // selected region too small, discard
         this.state = { state: 'EMPTY' };
@@ -102,7 +116,7 @@ export class RegionSelector {
         this.state = {
           state: 'DEFINED',
           imgCorner1: this.state.fixedCorner,
-          imgCorner2: corner2,
+          imgCorner2: newMovedCorner,
         };
       }
     } else if (this.state.state === 'MOVE_REGION') {

@@ -286,7 +286,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       return { corner1: state.imgCorner1, corner2: state.imgCorner2 };
     }
     if (state.state === 'MOVE_ONE_CORNER') {
-      return { corner1: state.fixedCorner, corner2: state.movedCorner };
+      return { corner1: state.fixedCorner, corner2: state.newMovedCorner };
     }
     if (state.state === 'MOVE_REGION') {
       return { corner1: state.newCorner1, corner2: state.newCorner2 };
