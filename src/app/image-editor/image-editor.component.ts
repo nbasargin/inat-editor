@@ -34,16 +34,7 @@ interface ImageEditorState {
   template: `
     <div class="canvas-area">
       <canvas #imageCanvas class="image-canvas"></canvas>
-      <canvas
-        #overlayCanvas
-        class="overlay-canvas"
-        (mousedown)="mouseDown($event)"
-        (mousemove)="mouseMove($event)"
-        (mouseup)="mouseUp($event)"
-        (mouseenter)="mouseEnter($event)"
-        (mouseleave)="mouseLeave($event)"
-      ></canvas>
-
+      <canvas #overlayCanvas class="overlay-canvas" (mousedown)="mouseDownCanvas($event)"></canvas>
       <div
         class="button-container"
         *ngIf="allowCrop && imageState && imageState.regionSelector.state.state === 'DEFINED'"
@@ -95,7 +86,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.resizeObserver.disconnect();
   }
 
-  mouseDown(e: MouseEvent) {
+  mouseDownCanvas(e: MouseEvent) {
     if (!this.allowCrop || !this.imageState) {
       return;
     }
@@ -105,7 +96,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.overlayCanvasRef.nativeElement.style.cursor = this.imageState.regionSelector.getCursor(imgXY);
   }
 
-  mouseMove(e: MouseEvent) {
+  @HostListener('document:mousemove', ['$event'])
+  mouseMoveDocument(e: MouseEvent) {
     if (!this.allowCrop || !this.imageState) {
       return;
     }
@@ -115,7 +107,8 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.redrawOverlay();
   }
 
-  mouseUp(e: MouseEvent) {
+  @HostListener('document:mouseup', ['$event'])
+  mouseUpDocument(e: MouseEvent) {
     if (!this.allowCrop || !this.imageState) {
       return;
     }
@@ -123,30 +116,6 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.imageState.regionSelector.mouseUp(imgXY);
     this.overlayCanvasRef.nativeElement.style.cursor = this.imageState.regionSelector.getCursor(imgXY);
     this.redrawOverlay();
-  }
-
-  mouseEnter(e: MouseEvent) {
-    if (!this.allowCrop || !this.imageState) {
-      return;
-    }
-    const primaryButtonUp = (e.buttons & 1) !== 1;
-    const state = this.imageState.regionSelector.state.state;
-    if (primaryButtonUp && (state === 'MOVE_ONE_CORNER' || state === 'MOVE_REGION')) {
-      // selection not complete but primary button not pressed, cancel selection
-      this.imageState.regionSelector.resetState();
-    }
-  }
-
-  mouseLeave(e: MouseEvent) {
-    if (!this.allowCrop || !this.imageState) {
-      return;
-    }
-    const state = this.imageState.regionSelector.state;
-    if (state.state === 'MOVE_ONE_CORNER' || state.state == 'MOVE_REGION') {
-      const { overlay, overlayCtx } = this.getOverlayAndContext();
-      CanvasDraw.clearCanvas(overlayCtx, overlay);
-      this.selectCropArea.next(null);
-    }
   }
 
   private canvasResize() {
