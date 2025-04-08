@@ -71,19 +71,21 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
   }>();
   @Output() selectCropArea = new EventEmitter<CropArea | null>();
 
-  @HostListener('document:keydown', ['$event']) keydown(event: KeyboardEvent) {
-    if (event.key !== 'Enter') {
-      return;
-    }
-    this.cropImage();
-  }
-
   ngOnInit(): void {
     this.resizeObserver.observe(this.imageCanvasRef.nativeElement);
   }
 
   ngOnDestroy(): void {
     this.resizeObserver.disconnect();
+  }
+
+  @HostListener('document:keydown', ['$event']) keydown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      this.cropImage();
+    }
+    if (event.key === 'Escape') {
+      this.cancelCrop();
+    }
   }
 
   mouseDownCanvas(e: MouseEvent) {
