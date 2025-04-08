@@ -164,11 +164,18 @@ export class RegionSelector {
    */
   private constrainSecondCorner(corner1: ImageXY, anotherPoint: ImageXY): ImageXY {
     const clipImgEnd = this.clipImageCoords(anotherPoint);
-    const width = clipImgEnd.imgX - corner1.imgX;
-    const height = clipImgEnd.imgY - corner1.imgY;
-    const maxSize = Math.min(Math.abs(width), Math.abs(height));
-    const boxEndX = corner1.imgX + maxSize * Math.sign(width);
-    const boxEndY = corner1.imgY + maxSize * Math.sign(height);
+    // calculate the width and height of the selection box
+    const selectionWidth = clipImgEnd.imgX - corner1.imgX;
+    const selectionHeight = clipImgEnd.imgY - corner1.imgY;
+    const maxSelectionSize = Math.max(Math.abs(selectionWidth), Math.abs(selectionHeight));
+    // calculate the maximum size of the box, depending on the corner1 position
+    const maxBoxWidth = Math.sign(selectionWidth) > 0 ? this.imgWidth - corner1.imgX : corner1.imgX;
+    const maxBoxHeight = Math.sign(selectionHeight) > 0 ? this.imgHeight - corner1.imgY : corner1.imgY;
+    const maxBoxSize = Math.min(maxBoxWidth, maxBoxHeight);
+    // constrain the box size to be within the image
+    const boxSize = Math.min(maxSelectionSize, maxBoxSize);
+    const boxEndX = corner1.imgX + boxSize * Math.sign(selectionWidth);
+    const boxEndY = corner1.imgY + boxSize * Math.sign(selectionHeight);
     return { imgX: boxEndX, imgY: boxEndY };
   }
 
