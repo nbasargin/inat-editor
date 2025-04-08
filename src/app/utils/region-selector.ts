@@ -109,7 +109,8 @@ export class RegionSelector {
       const movedCornerDxy = { imgX: this.state.oldMovedCorner.imgX + dx, imgY: this.state.oldMovedCorner.imgY + dy };
       const newMovedCorner = this.constrainSecondCorner(this.state.fixedCorner, movedCornerDxy);
       const imgBoxWidth = Math.abs(this.state.fixedCorner.imgX - newMovedCorner.imgX);
-      if (imgBoxWidth < 5) {
+      const distThreshold = this.coordinates.getDistanceThreshold();
+      if (imgBoxWidth < distThreshold) {
         // selected region too small, discard
         this.state = { state: 'EMPTY' };
       } else {
