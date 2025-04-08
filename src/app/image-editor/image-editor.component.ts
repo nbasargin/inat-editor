@@ -107,6 +107,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.imageState.regionSelector.mouseMove(imgXY);
     this.overlayCanvasRef.nativeElement.style.cursor = this.imageState.regionSelector.getCursor(imgXY);
     this.redrawOverlay();
+    this.highlightCloseCorner(e);
   }
 
   @HostListener('document:mouseup', ['$event'])
@@ -246,6 +247,21 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const width = Math.abs(region.corner1.imgX - region.corner2.imgX);
     const height = Math.abs(region.corner1.imgY - region.corner2.imgY);
     this.selectCropArea.next({ x, y, width, height });
+  }
+
+  private highlightCloseCorner(mouseEvent: MouseEvent) {
+    if (!this.imageState) {
+      return;
+    }
+    const imgXY = this.imageState.coordinates.clientToImage(mouseEvent);
+    let corner: ImageXY | null = this.imageState.regionSelector.getHighlightedCorner(imgXY);
+    if (!corner) {
+      return;
+    }
+    const canvasCenter = this.imageState.coordinates.imageToCanvas(corner);
+    const { overlay, overlayCtx } = this.getOverlayAndContext();
+    CanvasDraw.drawCircle(overlayCtx, canvasCenter.canvasX, canvasCenter.canvasY, 6, 'black');
+    CanvasDraw.drawCircle(overlayCtx, canvasCenter.canvasX, canvasCenter.canvasY, 4, 'white');
   }
 
   private getRegionSelectorArea() {

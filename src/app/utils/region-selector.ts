@@ -52,7 +52,7 @@ export class RegionSelector {
         mouseDownCoords: imgCoord,
       };
     } else if (this.state.state === 'DEFINED') {
-      const closeCorner = this.getCloseCorner(this.state.imgCorner1, this.state.imgCorner2, imageXY);
+      const closeCorner = this.getCloseCornersAndCursor(this.state.imgCorner1, this.state.imgCorner2, imageXY);
       if (closeCorner) {
         // mouse down close to a selected corner
         this.state = {
@@ -132,7 +132,7 @@ export class RegionSelector {
 
   getCursor(imageXY: ImageXY) {
     if (this.state.state === 'DEFINED') {
-      const closeCorner = this.getCloseCorner(this.state.imgCorner1, this.state.imgCorner2, imageXY);
+      const closeCorner = this.getCloseCornersAndCursor(this.state.imgCorner1, this.state.imgCorner2, imageXY);
       if (closeCorner) {
         return closeCorner.cursor;
       }
@@ -145,6 +145,18 @@ export class RegionSelector {
       return 'move';
     }
     return 'crosshair'; // EMPTY or MOVE_CORNER
+  }
+
+  getHighlightedCorner(imageXY: ImageXY): ImageXY | null {
+    if (this.state.state === 'DEFINED') {
+      const corners = this.getCloseCornersAndCursor(this.state.imgCorner1, this.state.imgCorner2, imageXY);
+      if (corners) {
+        return corners.corner;
+      }
+    } else if (this.state.state === 'MOVE_ONE_CORNER') {
+      return this.state.newMovedCorner;
+    }
+    return null;
   }
 
   /**
@@ -211,7 +223,7 @@ export class RegionSelector {
     return { minX, maxX, minY, maxY };
   }
 
-  private getCloseCorner(
+  private getCloseCornersAndCursor(
     corner1: ImageXY,
     corner2: ImageXY,
     imageXY: ImageXY,
