@@ -41,6 +41,30 @@ export class RegionSelector {
     this.state = { state: 'EMPTY' };
   }
 
+  reduceBoxSizeTo(maxSize: number) {
+    if (this.state.state !== 'DEFINED') {
+      return;
+    }
+    const corner1 = this.state.imgCorner1;
+    const corner2 = this.state.imgCorner2;
+    const size = Math.abs(corner1.imgX - corner2.imgX);
+    if (size <= maxSize) {
+      return;
+    }
+    const dSize = size - maxSize;
+    const d1 = Math.round(dSize / 2);
+    const d2 = dSize - d1;
+    const minX = Math.min(corner1.imgX, corner2.imgX) + d1;
+    const maxX = Math.max(corner1.imgX, corner2.imgX) - d2;
+    const minY = Math.min(corner1.imgY, corner2.imgY) + d1;
+    const maxY = Math.max(corner1.imgY, corner2.imgY) - d2;
+    this.state = {
+      state: 'DEFINED',
+      imgCorner1: { imgX: minX, imgY: minY },
+      imgCorner2: { imgX: maxX, imgY: maxY },
+    };
+  }
+
   mouseDown(imageXY: ImageXY) {
     if (this.state.state === 'EMPTY') {
       const imgCoord = this.clipImageCoords(imageXY);

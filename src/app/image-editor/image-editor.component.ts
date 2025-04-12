@@ -52,7 +52,7 @@ interface TwoCorners {
       [style.height.px]="floatingBtns.height"
     >
       <button mat-mini-fab color="warn" (click)="cancelCrop()"><mat-icon>close</mat-icon></button>
-      <button *ngIf="floatingBtns.showReduceSize" mat-mini-fab color="warn">
+      <button *ngIf="floatingBtns.showReduceSize" mat-mini-fab color="warn" (click)="reduceBoxSize()">
         <mat-icon>close_fullscreen</mat-icon>
       </button>
       <button mat-mini-fab color="primary" (click)="cropImage()"><mat-icon>check</mat-icon></button>
@@ -191,6 +191,14 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.updateOverlay();
   }
 
+  reduceBoxSize() {
+    if (!this.imageState) {
+      return;
+    }
+    this.imageState.regionSelector.reduceBoxSizeTo(MAX_IMAGE_SIZE);
+    this.updateOverlay();
+  }
+
   private resizeCanvasIfNeeded() {
     if (!this.imageCanvasRef || !this.overlayCanvasRef) {
       return;
@@ -314,7 +322,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       left: (right + left) / 2 - buttonsWidth / 2,
       height: buttonsHeight,
       width: buttonsWidth,
-      showReduceSize: false, // Math.abs(region.corner1.imgX - region.corner2.imgX) > MAX_IMAGE_SIZE,
+      showReduceSize: Math.abs(region.corner1.imgX - region.corner2.imgX) > MAX_IMAGE_SIZE,
     };
   }
 
