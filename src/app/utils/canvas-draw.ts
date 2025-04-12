@@ -7,6 +7,7 @@ export class CanvasDraw {
 
   static drawDashedLine(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number) {
     ctx.strokeStyle = 'white';
+    ctx.lineWidth = 1;
     ctx.setLineDash([]); // solid
     ctx.beginPath();
     ctx.moveTo(x0, y0);
@@ -36,6 +37,35 @@ export class CanvasDraw {
     CanvasDraw.drawDashedLine(ctx, x1, y1, x1, y0);
   }
 
+  static drawBoxOversizeCorners(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number) {
+    const halfWidth = 2;
+    const xMin = Math.min(x0, x1) - halfWidth;
+    const xMax = Math.max(x0, x1) + halfWidth;
+    const yMin = Math.min(y0, y1) - halfWidth;
+    const yMax = Math.max(y0, y1) + halfWidth;
+    ctx.strokeStyle = 'yellow';
+    ctx.lineWidth = halfWidth * 2 + 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    // top left corner
+    ctx.moveTo(xMin, yMin + 20);
+    ctx.lineTo(xMin, yMin);
+    ctx.lineTo(xMin + 20, yMin);
+    // top right corner
+    ctx.moveTo(xMax - 20, yMin);
+    ctx.lineTo(xMax, yMin);
+    ctx.lineTo(xMax, yMin + 20);
+    // bottom left corner
+    ctx.moveTo(xMin, yMax - 20);
+    ctx.lineTo(xMin, yMax);
+    ctx.lineTo(xMin + 20, yMax);
+    // bottom right corner
+    ctx.moveTo(xMax - 20, yMax);
+    ctx.lineTo(xMax, yMax);
+    ctx.lineTo(xMax, yMax - 20);
+    ctx.stroke();
+  }
+
   static drawThirds(ctx: CanvasRenderingContext2D, corner1: CanvasXY, corner2: CanvasXY) {
     const xMin = Math.round(Math.min(corner1.canvasX, corner2.canvasX));
     const yMin = Math.round(Math.min(corner1.canvasY, corner2.canvasY));
@@ -47,6 +77,7 @@ export class CanvasDraw {
     const y1 = Math.round(yMin + (height * 2) / 3);
     // draw
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.lineWidth = 1;
     ctx.setLineDash([]); // solid
     ctx.beginPath();
     // x0

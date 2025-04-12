@@ -7,7 +7,7 @@ import { UserCommentData } from './user-comment-data';
 
 export class ExportImage {
   constructor(
-    public maxCropSize: number = 2048,
+    public maxCropSize: number,
     public jpegExportQuality: number = 0.9,
   ) {}
 

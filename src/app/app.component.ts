@@ -11,6 +11,7 @@ import { ExportImage } from './utils/export-image';
 import { FileImageData, ImageLoader3, RelatedImagesData } from './utils/image-loader-3';
 import { InfoBarComponent } from './info-bar/info-bar.component';
 import { CropArea } from './utils/user-comment-data';
+import { MAX_IMAGE_SIZE } from './utils/constats';
 
 @Component({
   selector: 'ie-root',
@@ -100,7 +101,7 @@ export class AppComponent {
   }
 
   cropImageRegion(data: FileImageData, minXY: ImageXY, maxXY: ImageXY) {
-    const exporter = new ExportImage();
+    const exporter = new ExportImage(MAX_IMAGE_SIZE);
     exporter
       .exportImage(data.fsItem, data.image, data.dataURL, minXY, maxXY)
       .then((file) => {

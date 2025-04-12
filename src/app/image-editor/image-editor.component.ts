@@ -18,6 +18,7 @@ import { CanvasDraw } from '../utils/canvas-draw';
 import { RegionSelector } from '../utils/region-selector';
 import { FileImageData, RelatedImagesData } from '../utils/image-loader-3';
 import { CropArea } from '../utils/user-comment-data';
+import { MAX_IMAGE_SIZE } from '../utils/constats';
 
 interface ImageEditorState {
   fsItem: FsItem<FileSystemFileHandle>;
@@ -240,6 +241,16 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const canvasC2 = this.imageState.coordinates.imageToCanvas(region.corner2);
     CanvasDraw.drawDarkArea(overlayCtx, overlay, canvasC1, canvasC2);
     CanvasDraw.drawThirds(overlayCtx, canvasC1, canvasC2);
+    const size = Math.abs(region.corner1.imgX - region.corner2.imgX);
+    if (size > MAX_IMAGE_SIZE) {
+      CanvasDraw.drawBoxOversizeCorners(
+        overlayCtx,
+        canvasC1.canvasX,
+        canvasC1.canvasY,
+        canvasC2.canvasX,
+        canvasC2.canvasY,
+      );
+    }
     CanvasDraw.drawDashedBox(overlayCtx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
     // message
     const x = Math.min(region.corner1.imgX, region.corner2.imgX);
