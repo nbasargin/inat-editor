@@ -28,14 +28,10 @@
   height: 100%;
 }
 
-.button-container {
+.floating-buttons {
   position: absolute;
-  top: 0;
-  right: 0;
-  padding: 8px;
-  border-radius: 4px;
-  background: white;
-  @include mat.elevation(2);
   display: flex;
   gap: 8px;
+  justify-content: center;
+  align-items: center;
 }

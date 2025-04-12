@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { FsItem } from '../utils/fs-item';
 import { CanvasCoordinates, ImageXY } from '../utils/canvas-coordinates';
 import { CanvasDraw } from '../utils/canvas-draw';
@@ -28,21 +29,33 @@ interface ImageEditorState {
   regionSelector: RegionSelector;
 }
 
+interface TwoCorners {
+  corner1: ImageXY;
+  corner2: ImageXY;
+}
+
 @Component({
   selector: 'ie-image-editor',
   standalone: true,
-  imports: [MatButtonModule, CommonModule],
+  imports: [MatButtonModule, MatIconModule, CommonModule],
   template: `
     <div class="canvas-area">
       <canvas #imageCanvas class="image-canvas"></canvas>
       <canvas #overlayCanvas class="overlay-canvas" (mousedown)="mouseDownCanvas($event)"></canvas>
-      <div
-        class="button-container"
-        *ngIf="allowCrop && imageState && imageState.regionSelector.state.state === 'DEFINED'"
-      >
-        <button mat-raised-button color="warn" (click)="cancelCrop()">Cancel</button>
-        <button mat-raised-button color="primary" (click)="cropImage()">Crop Image</button>
-      </div>
+    </div>
+    <div
+      *ngIf="floatingBtns"
+      class="floating-buttons"
+      [style.left.px]="floatingBtns.left"
+      [style.top.px]="floatingBtns.top"
+      [style.width.px]="floatingBtns.width"
+      [style.height.px]="floatingBtns.height"
+    >
+      <button mat-mini-fab color="warn" (click)="cancelCrop()"><mat-icon>close</mat-icon></button>
+      <button *ngIf="floatingBtns.showReduceSize" mat-mini-fab color="warn">
+        <mat-icon>close_fullscreen</mat-icon>
+      </button>
+      <button mat-mini-fab color="primary" (click)="cropImage()"><mat-icon>check</mat-icon></button>
     </div>
   `,
   styleUrl: 'image-editor.component.scss',
@@ -51,6 +64,7 @@ interface ImageEditorState {
 export class ImageEditorComponent implements OnInit, OnDestroy {
   imageState: ImageEditorState | null = null;
   relatedImages: RelatedImagesData | null = null;
+  floatingBtns: { top: number; left: number; height: number; width: number; showReduceSize: boolean } | null = null;
   resizeObserver = new ResizeObserver(() => this.canvasResize());
 
   @ViewChild('imageCanvas', { static: true }) imageCanvasRef!: ElementRef<HTMLCanvasElement>;
@@ -107,7 +121,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const imgXY = this.imageState.coordinates.clientToImage(e);
     this.imageState.regionSelector.mouseMove(imgXY);
     this.overlayCanvasRef.nativeElement.style.cursor = this.imageState.regionSelector.getCursor(imgXY);
-    this.redrawOverlay();
+    this.updateOverlay();
     this.highlightCloseCorner(e);
   }
 
@@ -119,14 +133,14 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const imgXY = this.imageState.coordinates.clientToImage(e);
     this.imageState.regionSelector.mouseUp(imgXY);
     this.overlayCanvasRef.nativeElement.style.cursor = this.imageState.regionSelector.getCursor(imgXY);
-    this.redrawOverlay();
+    this.updateOverlay();
   }
 
   private canvasResize() {
     this.resizeCanvasIfNeeded();
     if (this.imageState) {
       this.redrawImage();
-      this.redrawOverlay();
+      this.updateOverlay();
     }
   }
 
@@ -147,7 +161,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     // update everything
     this.overlayCanvasRef.nativeElement.style.cursor = 'default';
     this.resizeCanvasIfNeeded();
-    this.redrawOverlay();
+    this.updateOverlay();
     this.redrawImage();
   }
 
@@ -165,7 +179,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     const minXY = { imgX: minX, imgY: minY };
     const maxXY = { imgX: maxX, imgY: maxY };
     this.imageState.regionSelector.resetState();
-    this.redrawOverlay();
+    this.updateOverlay();
     this.cropImageRegion.next({ data: { fsItem, image, dataURL }, minXY, maxXY });
   }
 
@@ -174,7 +188,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       return;
     }
     this.imageState.regionSelector.resetState();
-    this.redrawOverlay();
+    this.updateOverlay();
   }
 
   private resizeCanvasIfNeeded() {
@@ -228,12 +242,30 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  private redrawOverlay() {
+  private updateOverlay() {
+    this.updateSelectedCropArea();
+    this.updateFloatingButtons();
+    this.updateOverlayCanvas();
+  }
+
+  private updateSelectedCropArea() {
+    const region = this.getRegionSelectorArea();
+    if (!region) {
+      this.selectCropArea.next(null);
+      return;
+    }
+    const x = Math.min(region.corner1.imgX, region.corner2.imgX);
+    const y = Math.min(region.corner1.imgY, region.corner2.imgY);
+    const width = Math.abs(region.corner1.imgX - region.corner2.imgX);
+    const height = Math.abs(region.corner1.imgY - region.corner2.imgY);
+    this.selectCropArea.next({ x, y, width, height });
+  }
+
+  private updateOverlayCanvas() {
     const { overlay, overlayCtx } = this.getOverlayAndContext();
     CanvasDraw.clearCanvas(overlayCtx, overlay);
     const region = this.getRegionSelectorArea();
     if (!this.imageState || !region) {
-      this.selectCropArea.next(null);
       return;
     }
     // outline
@@ -252,12 +284,38 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       );
     }
     CanvasDraw.drawDashedBox(overlayCtx, canvasC1.canvasX, canvasC1.canvasY, canvasC2.canvasX, canvasC2.canvasY);
-    // message
-    const x = Math.min(region.corner1.imgX, region.corner2.imgX);
-    const y = Math.min(region.corner1.imgY, region.corner2.imgY);
-    const width = Math.abs(region.corner1.imgX - region.corner2.imgX);
-    const height = Math.abs(region.corner1.imgY - region.corner2.imgY);
-    this.selectCropArea.next({ x, y, width, height });
+  }
+
+  private updateFloatingButtons() {
+    const region = this.getRegionSelectorArea();
+    if (!this.imageState || !region || !this.allowCrop || this.imageState.regionSelector.state.state !== 'DEFINED') {
+      this.floatingBtns = null;
+      return;
+    }
+    const clientC1 = this.imageState.coordinates.imageToClient(region.corner1);
+    const clientC2 = this.imageState.coordinates.imageToClient(region.corner2);
+    const left = Math.min(clientC1.clientX, clientC2.clientX);
+    const right = Math.max(clientC1.clientX, clientC2.clientX);
+    const top = Math.min(clientC1.clientY, clientC2.clientY);
+    const bottom = Math.max(clientC1.clientY, clientC2.clientY);
+    const buttonsHeight = 48;
+    const buttonPadding = 12;
+    const buttonsWidth = 200;
+    const canvasRect = this.imageCanvasRef.nativeElement.getBoundingClientRect();
+    const bottomOk = bottom + (buttonsHeight + buttonPadding) < canvasRect.bottom;
+    const topOk = top - (buttonsHeight + buttonPadding) > canvasRect.top;
+    const buttonsTop = bottomOk
+      ? bottom + buttonPadding
+      : topOk
+        ? top - (buttonsHeight + buttonPadding)
+        : bottom - (buttonsHeight + buttonPadding);
+    this.floatingBtns = {
+      top: buttonsTop,
+      left: (right + left) / 2 - buttonsWidth / 2,
+      height: buttonsHeight,
+      width: buttonsWidth,
+      showReduceSize: false, // Math.abs(region.corner1.imgX - region.corner2.imgX) > MAX_IMAGE_SIZE,
+    };
   }
 
   private highlightCloseCorner(mouseEvent: MouseEvent) {
@@ -275,7 +333,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     CanvasDraw.drawCircle(overlayCtx, canvasCenter.canvasX, canvasCenter.canvasY, 4, 'white');
   }
 
-  private getRegionSelectorArea() {
+  private getRegionSelectorArea(): TwoCorners | null {
     if (!this.imageState) {
       return null;
     }
