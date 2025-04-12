@@ -52,6 +52,17 @@ export class CanvasCoordinates {
     return { canvasX, canvasY };
   }
 
+  canvasToClient(canvasXY: CanvasXY): ClientXY {
+    const { x, y } = this.canvas.getBoundingClientRect();
+    const clientX = Math.round(canvasXY.canvasX / devicePixelRatio + x);
+    const clientY = Math.round(canvasXY.canvasY / devicePixelRatio + y);
+    return { clientX, clientY };
+  }
+
+  imageToClient(imageXY: ImageXY): ClientXY {
+    return this.canvasToClient(this.imageToCanvas(imageXY));
+  }
+
   fitImage() {
     const innerWidth = this.canvas.width - this.canvasPadding * 2;
     const innerHeight = this.canvas.height - this.canvasPadding * 2;
