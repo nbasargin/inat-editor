@@ -20,6 +20,7 @@ import { RegionSelector } from '../utils/region-selector';
 import { FileImageData, RelatedImagesData } from '../utils/image-loader-3';
 import { CropArea } from '../utils/user-comment-data';
 import { MAX_IMAGE_SIZE } from '../utils/constats';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface ImageEditorState {
   fsItem: FsItem<FileSystemFileHandle>;
@@ -37,7 +38,7 @@ interface TwoCorners {
 @Component({
   selector: 'ie-image-editor',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, CommonModule],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, CommonModule],
   template: `
     <div class="canvas-area">
       <canvas #imageCanvas class="image-canvas"></canvas>
@@ -51,11 +52,21 @@ interface TwoCorners {
       [style.width.px]="floatingBtns.width"
       [style.height.px]="floatingBtns.height"
     >
-      <button mat-mini-fab color="warn" (click)="cancelCrop()"><mat-icon>close</mat-icon></button>
-      <button *ngIf="floatingBtns.showReduceSize" mat-mini-fab color="warn" (click)="reduceBoxSize()">
+      <button mat-mini-fab color="warn" (click)="cancelCrop()" matTooltip="Clear selection">
+        <mat-icon>close</mat-icon>
+      </button>
+      <button
+        *ngIf="floatingBtns.showReduceSize"
+        mat-mini-fab
+        color="warn"
+        (click)="reduceBoxSize()"
+        matTooltip="Reduce selected area size"
+      >
         <mat-icon>close_fullscreen</mat-icon>
       </button>
-      <button mat-mini-fab color="primary" (click)="cropImage()"><mat-icon>check</mat-icon></button>
+      <button mat-mini-fab color="primary" (click)="cropImage()" matTooltip="Export selected area">
+        <mat-icon>check</mat-icon>
+      </button>
     </div>
   `,
   styleUrl: 'image-editor.component.scss',
