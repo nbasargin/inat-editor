@@ -54,13 +54,16 @@ export class FileListComponent {
   fileListItems: Array<FileListItem> = [];
   @Input() set fileList(list: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>>) {
     this.fileListItems = list.map((file) => this.fsItemToListItem(file));
+    this.scrollToTop();
   }
 
   // selected item
   private _selectedFile: FsItem<FileSystemFileHandle> | null = null;
   @Input() set selectedFile(fsItem: FsItem<FileSystemFileHandle> | null) {
     this._selectedFile = fsItem;
-    this.scrollSelectedItemIntoView();
+    if (fsItem) {
+      this.scrollSelectedItemIntoView(fsItem);
+    }
   }
   get selectedFile(): FsItem<FileSystemFileHandle> | null {
     return this._selectedFile;
@@ -70,6 +73,8 @@ export class FileListComponent {
 
   @Output() folderSelected = new EventEmitter<FsItem<FileSystemDirectoryHandle>>();
   @Output() fileSelected = new EventEmitter<FsItem<FileSystemFileHandle>>();
+
+  constructor(private hostRef: ElementRef) {}
 
   private fsItemToListItem(fsItem: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>): FileListItem {
     const icon = fsItem.handle.kind === 'directory' ? 'folder' : 'insert_drive_file';
@@ -87,19 +92,25 @@ export class FileListComponent {
     }
   }
 
-  private scrollSelectedItemIntoView() {
-    if (!this.selectedFile || !this.listItemDivs) {
+  private scrollSelectedItemIntoView(fsItem: FsItem<FileSystemFileHandle>) {
+    if (!this.listItemDivs) {
       return;
     }
     for (let i = 0; i < this.fileListItems.length; i++) {
       const listItem = this.fileListItems[i];
-      if (listItem.fsItem.handle === this.selectedFile.handle) {
+      if (listItem.fsItem.handle === fsItem.handle) {
         const selectedItem = this.listItemDivs.get(i);
         if (selectedItem) {
           selectedItem.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
         return;
       }
+    }
+  }
+
+  private scrollToTop() {
+    if (this.hostRef.nativeElement) {
+      this.hostRef.nativeElement.scrollTop = 0;
     }
   }
 }
