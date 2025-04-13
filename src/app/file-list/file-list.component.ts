@@ -1,5 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  Output,
+  QueryList,
+  ViewChildren,
+} from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { FsItem } from '../utils/fs-item';
@@ -24,6 +33,7 @@ interface FileListItem {
       class="folder-entry"
       [class.selected]="selectedFile && listItem.fsItem.handle === selectedFile.handle"
       (click)="clickListItem(listItem.fsItem)"
+      #listItemDiv
     >
       <mat-icon [fontIcon]="listItem.icon" class="entry-icon"></mat-icon>
       <span class="entry-name" [matTooltip]="listItem.fsItem.handle.name" [matTooltipShowDelay]="200">{{
@@ -39,12 +49,23 @@ interface FileListItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileListComponent {
+  // list of items
+  @ViewChildren('listItemDiv') listItemDivs!: QueryList<ElementRef>;
   fileListItems: Array<FileListItem> = [];
-
   @Input() set fileList(list: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>>) {
     this.fileListItems = list.map((file) => this.fsItemToListItem(file));
   }
-  @Input() selectedFile: FsItem<FileSystemFileHandle> | null = null;
+
+  // selected item
+  private _selectedFile: FsItem<FileSystemFileHandle> | null = null;
+  @Input() set selectedFile(fsItem: FsItem<FileSystemFileHandle> | null) {
+    this._selectedFile = fsItem;
+    this.scrollSelectedItemIntoView();
+  }
+  get selectedFile(): FsItem<FileSystemFileHandle> | null {
+    return this._selectedFile;
+  }
+
   @Input() parentFolder: FsItem<FileSystemDirectoryHandle> | null = null;
 
   @Output() folderSelected = new EventEmitter<FsItem<FileSystemDirectoryHandle>>();
@@ -63,6 +84,22 @@ export class FileListComponent {
       this.fileSelected.emit(fsItem as FsItem<FileSystemFileHandle>);
     } else if (fsItem.handle instanceof FileSystemDirectoryHandle) {
       this.folderSelected.emit(fsItem as FsItem<FileSystemDirectoryHandle>);
+    }
+  }
+
+  private scrollSelectedItemIntoView() {
+    if (!this.selectedFile || !this.listItemDivs) {
+      return;
+    }
+    for (let i = 0; i < this.fileListItems.length; i++) {
+      const listItem = this.fileListItems[i];
+      if (listItem.fsItem.handle === this.selectedFile.handle) {
+        const selectedItem = this.listItemDivs.get(i);
+        if (selectedItem) {
+          selectedItem.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        return;
+      }
     }
   }
 }
