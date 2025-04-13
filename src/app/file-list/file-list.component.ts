@@ -16,6 +16,7 @@ import { FsItem } from '../utils/fs-item';
 interface FileListItem {
   fsItem: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>;
   icon: string;
+  disabled: boolean;
 }
 
 @Component({
@@ -32,6 +33,7 @@ interface FileListItem {
       *ngFor="let listItem of fileListItems"
       class="folder-entry"
       [class.selected]="selectedFile && listItem.fsItem.handle === selectedFile.handle"
+      [class.disabled]="listItem.disabled"
       (click)="clickListItem(listItem.fsItem)"
       #listItemDiv
     >
@@ -78,9 +80,12 @@ export class FileListComponent {
 
   private fsItemToListItem(fsItem: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>): FileListItem {
     const icon = fsItem.handle.kind === 'directory' ? 'folder' : 'insert_drive_file';
+    const name = fsItem.handle.name.toLocaleLowerCase();
+    const disabled = fsItem.handle.kind !== 'directory' && !name.endsWith('.jpg') && !name.endsWith('.jpeg');
     return {
       fsItem: fsItem,
       icon: icon,
+      disabled: disabled,
     };
   }
 
