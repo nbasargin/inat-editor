@@ -1,4 +1,5 @@
 import { CanvasCoordinates, ImageXY } from './canvas-coordinates';
+import { PreviousCrop } from './previous-crop';
 
 export type RegionSelectorState =
   | {
@@ -62,6 +63,18 @@ export class RegionSelector {
       state: 'DEFINED',
       imgCorner1: { imgX: minX, imgY: minY },
       imgCorner2: { imgX: maxX, imgY: maxY },
+    };
+  }
+
+  setCrop(previousCrop: PreviousCrop) {
+    if (this.imgWidth !== previousCrop.imgWidth || this.imgHeight !== previousCrop.imgHeight) {
+      return;
+    }
+    const { x, y, width, height } = previousCrop.cropArea;
+    this.state = {
+      state: 'DEFINED',
+      imgCorner1: { imgX: x, imgY: y },
+      imgCorner2: { imgX: x + width, imgY: y + height },
     };
   }
 

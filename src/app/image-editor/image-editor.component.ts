@@ -21,6 +21,7 @@ import { FileImageData, RelatedImagesData } from '../utils/image-loader-3';
 import { CropArea } from '../utils/user-comment-data';
 import { MAX_IMAGE_SIZE } from '../utils/constats';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { PreviousCrop } from '../utils/previous-crop';
 
 interface ImageEditorState {
   fsItem: FsItem<FileSystemFileHandle>;
@@ -85,6 +86,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.relatedImages = data;
     this.redrawImage();
   }
+  @Input() previousCrop: PreviousCrop | null = null;
 
   @Output() cropImageRegion = new EventEmitter<{
     data: FileImageData;
@@ -115,7 +117,7 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
       this.setSmallCrop();
     }
     if (event.key === 'Insert') {
-      // this.loadPrevCrop();
+      this.loadPrevCrop();
     }
   }
 
@@ -179,6 +181,14 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.resizeCanvasIfNeeded();
     this.updateOverlay();
     this.redrawImage();
+  }
+
+  loadPrevCrop() {
+    if (!this.allowCrop || !this.imageState || !this.previousCrop) {
+      return;
+    }
+    this.imageState.regionSelector.setCrop(this.previousCrop);
+    this.updateOverlay();
   }
 
   setSmallCrop() {

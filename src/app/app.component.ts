@@ -12,6 +12,7 @@ import { FileImageData, ImageLoader3, RelatedImagesData } from './utils/image-lo
 import { InfoBarComponent } from './info-bar/info-bar.component';
 import { CropArea } from './utils/user-comment-data';
 import { MAX_IMAGE_SIZE } from './utils/constats';
+import { PreviousCrop } from './utils/previous-crop';
 
 @Component({
   selector: 'ie-root',
@@ -48,6 +49,7 @@ import { MAX_IMAGE_SIZE } from './utils/constats';
             [imageData]="imageData | async"
             [relatedImagesData]="relatedImagesData | async"
             [allowCrop]="allowCrop"
+            [previousCrop]="previousCrop"
             (cropImageRegion)="cropImageRegion($event.data, $event.minXY, $event.maxXY)"
             (selectCropArea)="selectedCropArea = $event"
             class="editor"
@@ -73,6 +75,7 @@ export class AppComponent {
   relatedImagesData: Promise<RelatedImagesData> | null = null;
   allowCrop = false;
   selectedCropArea: CropArea | null = null;
+  previousCrop: PreviousCrop | null = null;
 
   constructor(private _snackBar: MatSnackBar) {
     this.fileApiSupported = !!window.showOpenFilePicker;
@@ -104,6 +107,16 @@ export class AppComponent {
   }
 
   cropImageRegion(data: FileImageData, minXY: ImageXY, maxXY: ImageXY) {
+    this.previousCrop = {
+      cropArea: {
+        x: minXY.imgX,
+        y: minXY.imgY,
+        width: maxXY.imgX - minXY.imgX,
+        height: maxXY.imgY - minXY.imgY,
+      },
+      imgWidth: data.image.width,
+      imgHeight: data.image.height,
+    };
     const exporter = new ExportImage(MAX_IMAGE_SIZE);
     exporter
       .exportImage(data.fsItem, data.image, data.dataURL, minXY, maxXY)
