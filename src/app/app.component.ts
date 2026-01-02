@@ -91,7 +91,7 @@ export class AppComponent {
       folderContents.push(new FsItem(entry, selectedFolder));
     }
     // sort by name
-    folderContents.sort((a, b) => (a.handle.name < b.handle.name ? -1 : 1));
+    folderContents.sort((a, b) => (a.handle.name > b.handle.name ? -1 : 1));
     // sort to have folders first
     const folders = folderContents.filter((item) => item.handle.kind === 'directory');
     const files = folderContents.filter((item) => item.handle.kind === 'file');
