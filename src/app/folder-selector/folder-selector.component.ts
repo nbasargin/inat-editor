@@ -5,7 +5,6 @@ import { FsItem } from '../utils/fs-item';
 
 @Component({
   selector: 'ie-folder-selector',
-  standalone: true,
   imports: [MatButtonModule, CommonModule],
   template: `
     <button mat-raised-button color="primary" (click)="selectNewFolder()" class="open-folder-button">

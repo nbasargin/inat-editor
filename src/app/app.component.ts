@@ -15,7 +15,6 @@ import { MAX_IMAGE_SIZE } from './utils/constats';
 
 @Component({
   selector: 'ie-root',
-  standalone: true,
   imports: [
     CommonModule,
     FileAccessNotSupportedComponent,

@@ -21,7 +21,6 @@ interface FileListItem {
 
 @Component({
   selector: 'ie-file-list',
-  standalone: true,
   imports: [CommonModule, MatIconModule, MatTooltipModule],
   providers: [{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: { disableTooltipInteractivity: true } }],
   template: `

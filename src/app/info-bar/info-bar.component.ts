@@ -5,7 +5,6 @@ import { CropArea } from '../utils/user-comment-data';
 
 @Component({
   selector: 'ie-info-bar',
-  standalone: true,
   imports: [CommonModule],
   template: `
     <div *ngIf="!allowCrop">Cropping is disabled in the iNat folder.</div>

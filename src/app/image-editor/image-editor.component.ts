@@ -37,7 +37,6 @@ interface TwoCorners {
 
 @Component({
   selector: 'ie-image-editor',
-  standalone: true,
   imports: [MatButtonModule, MatIconModule, MatTooltipModule, CommonModule],
   template: `
     <div class="canvas-area">

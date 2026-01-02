@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'ie-file-access-not-supported',
-  standalone: true,
   imports: [],
   template: `
     <div>File System Access API is not available! See supporting browsers:</div>
