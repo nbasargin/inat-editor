@@ -105,19 +105,18 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     if (event.key === 'Enter') {
       this.cropImage();
     }
-    if (event.key === 'Escape') {
+    if (event.key === 'Escape' || event.key === 'Delete') {
       this.cancelCrop();
     }
     if (event.key === 'End') {
-      this.setFullCropImage();
+      this.setFullCrop();
     }
     if (event.key === 'Home') {
-      this.setSmallCropImage();
+      this.setSmallCrop();
     }
-    //  End
-    //  Home
-    //  Delete
-    //  Insert
+    if (event.key === 'Insert') {
+      // this.loadPrevCrop();
+    }
   }
 
   mouseDownCanvas(e: MouseEvent) {
@@ -182,19 +181,19 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.redrawImage();
   }
 
-  setSmallCropImage() {
+  setSmallCrop() {
     if (!this.allowCrop || !this.imageState) {
       return;
     }
-    this.imageState.regionSelector.setSmallImageCrop();
+    this.imageState.regionSelector.setSmallCrop();
     this.updateOverlay();
   }
 
-  setFullCropImage() {
+  setFullCrop() {
     if (!this.allowCrop || !this.imageState) {
       return;
     }
-    this.imageState.regionSelector.setFullImageCrop();
+    this.imageState.regionSelector.setFullCrop();
     this.updateOverlay();
   }
 

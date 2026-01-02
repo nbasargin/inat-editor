@@ -65,7 +65,7 @@ export class RegionSelector {
     };
   }
 
-  setFullImageCrop() {
+  setFullCrop() {
     // Select the largest square that fits the image and center it.
     const side = Math.min(this.imgWidth, this.imgHeight);
     const offsetX = Math.round((this.imgWidth - side) / 2);
@@ -77,7 +77,7 @@ export class RegionSelector {
     };
   }
 
-  setSmallImageCrop() {
+  setSmallCrop() {
     // Select a 512x512 square centered in the image (or smaller if the image is small).
     const desiredSide = 512;
     const side = Math.min(desiredSide, this.imgWidth, this.imgHeight);
