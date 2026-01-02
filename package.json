@@ -7,7 +7,7 @@
     "build": "ng build",
     "build:prod": "ng build --configuration=production --base-href=/inat-editor/",
     "watch": "ng build --watch --configuration development",
-    "lint": "ng lint",
+    "lint": "prettier --check .",
     "format": "prettier --write ."
   },
   "private": true,
@@ -29,11 +29,6 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^17.0.8",
-    "@angular-eslint/builder": "17.1.1",
-    "@angular-eslint/eslint-plugin": "17.1.1",
-    "@angular-eslint/eslint-plugin-template": "17.1.1",
-    "@angular-eslint/schematics": "17.1.1",
-    "@angular-eslint/template-parser": "17.1.1",
     "@angular/cli": "^17.0.8",
     "@angular/compiler-cli": "^17.0.0",
     "@types/wicg-file-system-access": "^2023.10.4",

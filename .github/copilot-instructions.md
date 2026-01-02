@@ -11,7 +11,7 @@
 - Dev server: `npm start` (runs `ng serve`, opens at `http://localhost:4200`).
 - Build (prod): `npm run build:prod` (sets `--configuration=production` and `--base-href=/inat-editor/`).
 - Build (default): `npm run build` (uses Angular default configuration; project `angular.json` sets production as default).
-- Lint: `npm run lint` (uses `@angular-eslint`).
+- Lint: `npm run lint` (runs `prettier --check .`).
 - Format: `npm run format` (runs Prettier).
 
 ## Project layout & important files
