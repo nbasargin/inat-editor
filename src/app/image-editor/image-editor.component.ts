@@ -111,6 +111,13 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     if (event.key === 'End') {
       this.setFullCropImage();
     }
+    if (event.key === 'Home') {
+      this.setSmallCropImage();
+    }
+    //  End
+    //  Home
+    //  Delete
+    //  Insert
   }
 
   mouseDownCanvas(e: MouseEvent) {
@@ -173,6 +180,14 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.resizeCanvasIfNeeded();
     this.updateOverlay();
     this.redrawImage();
+  }
+
+  setSmallCropImage() {
+    if (!this.allowCrop || !this.imageState) {
+      return;
+    }
+    this.imageState.regionSelector.setSmallImageCrop();
+    this.updateOverlay();
   }
 
   setFullCropImage() {
