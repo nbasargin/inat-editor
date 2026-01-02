@@ -22,7 +22,6 @@
 - `src/` — application source; main entry `src/main.ts`, `src/index.html`.
 - `src/app/` — Angular components (e.g., `image-editor`, `file-list`, `folder-selector`, `info-bar`), shared utilities in `src/app/utils/`.
 - `src/assets/` — static assets.
-- `types/` — third-party types (`piexifjs` has a declaration here).
 - `.github/workflows/main.yaml` — CI workflow (build + deploy). Note: workflow uses Node 20 and runs `npm install && npm run build:prod` then a deploy step.
 
 ## Common pitfalls and guidance
@@ -39,7 +38,7 @@
 ## EXIF details
 
 - The app uses the `piexifjs` library to read and write EXIF metadata.
-- Only a subset of EXIF tags are preserved, see `src/app/utils/exif.util.ts` for the list.
+- Only a subset of EXIF tags are preserved, see `src/app/utils/exif-utils.ts` for the list.
 
 ## Access to photos
 
