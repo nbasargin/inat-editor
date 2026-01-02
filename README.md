@@ -23,3 +23,9 @@ Deployed version: https://nbasargin.github.io/inat-editor/
 ### Running locally
 
 This is a standard Angular project. Clone the repository, install dependencies (`npm i`), run `ng serve` for a dev server, and open `http://localhost:4200/`.
+
+### GitHub Actions Deploy
+
+Each push to the main brunch builds and deploys the project to the GitHub page.
+The deployment can fail if the access token is outdated.
+A new one can be created in "GitHub user icon > Settings > Developer setting > Personal access tokens".
