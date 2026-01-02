@@ -24,39 +24,43 @@ import { MAX_IMAGE_SIZE } from './utils/constats';
     InfoBarComponent,
   ],
   template: `
-    <ie-file-access-not-supported *ngIf="!fileApiSupported"></ie-file-access-not-supported>
-    <div class="main-layout" *ngIf="fileApiSupported">
-      <ie-folder-selector
-        [selectedFolder]="selectedFolder"
-        [selectedFile]="selectedFile"
-        (folderSelected)="setSelectedFolder($event)"
-        class="folder-selector"
-      ></ie-folder-selector>
-      <ng-container *ngIf="selectedFolder">
-        <ie-file-list
-          [fileList]="folderContents"
+    @if (!fileApiSupported) {
+      <ie-file-access-not-supported></ie-file-access-not-supported>
+    }
+    @if (fileApiSupported) {
+      <div class="main-layout">
+        <ie-folder-selector
+          [selectedFolder]="selectedFolder"
           [selectedFile]="selectedFile"
-          [parentFolder]="selectedFolder ? selectedFolder.parent : null"
-          (fileSelected)="setSelectedFile($event)"
           (folderSelected)="setSelectedFolder($event)"
-          class="files"
-        ></ie-file-list>
-        <ie-image-editor
-          [imageData]="imageData | async"
-          [relatedImagesData]="relatedImagesData | async"
-          [allowCrop]="allowCrop"
-          (cropImageRegion)="cropImageRegion($event.data, $event.minXY, $event.maxXY)"
-          (selectCropArea)="selectedCropArea = $event"
-          class="editor"
-        ></ie-image-editor>
-        <ie-info-bar
-          [allowCrop]="allowCrop"
-          [relatedImagesData]="relatedImagesData | async"
-          [selectedCropArea]="selectedCropArea"
-          class="info"
-        ></ie-info-bar>
-      </ng-container>
-    </div>
+          class="folder-selector"
+        ></ie-folder-selector>
+        @if (selectedFolder) {
+          <ie-file-list
+            [fileList]="folderContents"
+            [selectedFile]="selectedFile"
+            [parentFolder]="selectedFolder ? selectedFolder.parent : null"
+            (fileSelected)="setSelectedFile($event)"
+            (folderSelected)="setSelectedFolder($event)"
+            class="files"
+          ></ie-file-list>
+          <ie-image-editor
+            [imageData]="imageData | async"
+            [relatedImagesData]="relatedImagesData | async"
+            [allowCrop]="allowCrop"
+            (cropImageRegion)="cropImageRegion($event.data, $event.minXY, $event.maxXY)"
+            (selectCropArea)="selectedCropArea = $event"
+            class="editor"
+          ></ie-image-editor>
+          <ie-info-bar
+            [allowCrop]="allowCrop"
+            [relatedImagesData]="relatedImagesData | async"
+            [selectedCropArea]="selectedCropArea"
+            class="info"
+          ></ie-info-bar>
+        }
+      </div>
+    }
   `,
   styleUrl: 'app.component.scss',
 })

@@ -1,19 +1,20 @@
-import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { FsItem } from '../utils/fs-item';
 
 @Component({
   selector: 'ie-folder-selector',
-  imports: [MatButtonModule, CommonModule],
+  imports: [MatButtonModule],
   template: `
     <button mat-raised-button color="primary" (click)="selectNewFolder()" class="open-folder-button">
       Open Folder
     </button>
-    <ng-container *ngFor="let item of getPathElements(); let last = last">
+    @for (item of getPathElements(); track item; let last = $last) {
       <span class="folder-name" (click)="clickExistingPathItem(item)">{{ item.handle.name }}</span>
-      <span class="separator" *ngIf="!last">&gt;</span>
-    </ng-container>
+      @if (!last) {
+        <span class="separator">&gt;</span>
+      }
+    }
   `,
   styleUrl: 'folder-selector.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

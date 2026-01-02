@@ -62,8 +62,8 @@ export class ImageLoader3 {
   private static async loadCropArea(image: FsItem<FileSystemFileHandle>): Promise<CropArea | null> {
     try {
       const dataURL = await ImageLoader3.readImageDataURL(image.handle);
-      const exif = ExifUtils.readExifFromDataUrl(dataURL);
-      const userCommentAscii = exif.Exif[0x9286]; // Exif.Photo.UserComment
+      const exif = ExifUtils.readExifFromDataUrl(dataURL).Exif;
+      const userCommentAscii = exif ? exif[0x9286] : 'null'; // Exif.Photo.UserComment
       let userComment: UserCommentData | null = null;
       try {
         userComment = JSON.parse(userCommentAscii);

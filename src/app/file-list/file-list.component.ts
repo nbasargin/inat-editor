@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -21,30 +20,35 @@ interface FileListItem {
 
 @Component({
   selector: 'ie-file-list',
-  imports: [CommonModule, MatIconModule, MatTooltipModule],
+  imports: [MatIconModule, MatTooltipModule],
   providers: [{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: { disableTooltipInteractivity: true } }],
   template: `
-    <div *ngIf="parentFolder" class="folder-entry" (click)="clickListItem(parentFolder)">
-      <mat-icon [fontIcon]="'drive_file_move_rtl'" class="entry-icon"></mat-icon>
-      <span class="entry-name">..</span>
-    </div>
-    <div
-      *ngFor="let listItem of fileListItems"
-      class="folder-entry"
-      [class.selected]="selectedFile && listItem.fsItem.handle === selectedFile.handle"
-      [class.disabled]="listItem.disabled"
-      (click)="clickListItem(listItem.fsItem)"
-      #listItemDiv
-    >
-      <mat-icon [fontIcon]="listItem.icon" class="entry-icon"></mat-icon>
-      <span class="entry-name" [matTooltip]="listItem.fsItem.handle.name" [matTooltipShowDelay]="200">{{
-        listItem.fsItem.handle.name
-      }}</span>
-    </div>
-    <div *ngIf="fileListItems.length === 0" class="folder-entry empty-list-message">
-      <mat-icon [fontIcon]="'block'" class="entry-icon"></mat-icon>
-      <span class="entry-name">No files</span>
-    </div>
+    @if (parentFolder) {
+      <div class="folder-entry" (click)="clickListItem(parentFolder)">
+        <mat-icon [fontIcon]="'drive_file_move_rtl'" class="entry-icon"></mat-icon>
+        <span class="entry-name">..</span>
+      </div>
+    }
+    @for (listItem of fileListItems; track listItem) {
+      <div
+        class="folder-entry"
+        [class.selected]="selectedFile && listItem.fsItem.handle === selectedFile.handle"
+        [class.disabled]="listItem.disabled"
+        (click)="clickListItem(listItem.fsItem)"
+        #listItemDiv
+      >
+        <mat-icon [fontIcon]="listItem.icon" class="entry-icon"></mat-icon>
+        <span class="entry-name" [matTooltip]="listItem.fsItem.handle.name" [matTooltipShowDelay]="200">{{
+          listItem.fsItem.handle.name
+        }}</span>
+      </div>
+    }
+    @if (fileListItems.length === 0) {
+      <div class="folder-entry empty-list-message">
+        <mat-icon [fontIcon]="'block'" class="entry-icon"></mat-icon>
+        <span class="entry-name">No files</span>
+      </div>
+    }
   `,
   styleUrl: 'file-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

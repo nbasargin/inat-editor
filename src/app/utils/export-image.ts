@@ -1,4 +1,4 @@
-import { ExifObject } from 'piexifjs';
+import piexifjs from 'piexifjs';
 import { ImageXY } from './canvas-coordinates';
 import { ExifUtils } from './exif-utils';
 import { FsItem } from './fs-item';
@@ -19,11 +19,11 @@ export class ExportImage {
     maxXY: ImageXY,
   ): Promise<FsItem<FileSystemFileHandle>> {
     // read exif data for original dataurl
-    const originalExif: ExifObject = ExifUtils.readExifFromDataUrl(imgDataUrl);
+    const originalExif: piexifjs.ExifDict = ExifUtils.readExifFromDataUrl(imgDataUrl);
     // create new exif with selected tags, correct dimensions, and a user comment with some metadata
     const { canvasSize } = this.imgPointsToSize(minXY, maxXY);
     const usercommentAscii = this.createUserComment(minXY, maxXY);
-    const newExif: ExifObject = ExifUtils.createNewExif(originalExif, canvasSize, canvasSize, usercommentAscii);
+    const newExif: piexifjs.ExifDict = ExifUtils.createNewExif(originalExif, canvasSize, canvasSize, usercommentAscii);
     // crop image to dataurl
     const croppedImageDataUrl = this.cropImageToDataUrl(img, minXY, maxXY);
     // write modified exif into croppedImage dataurl

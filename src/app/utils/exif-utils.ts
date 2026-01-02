@@ -1,22 +1,22 @@
-import * as piexifjs from 'piexifjs';
+import piexifjs from 'piexifjs';
 
 export class ExifUtils {
   static readExifFromDataUrl(dataUrl: string) {
     return piexifjs.load(dataUrl);
   }
 
-  static writeExifToDataUrl(dataUrl: string, exifObj: piexifjs.ExifObject) {
+  static writeExifToDataUrl(dataUrl: string, exifObj: piexifjs.ExifDict) {
     const dataClean = piexifjs.remove(dataUrl);
     const exifBytes = piexifjs.dump(exifObj);
     return piexifjs.insert(exifBytes, dataClean);
   }
 
   static createNewExif(
-    originalExif: piexifjs.ExifObject,
+    originalExif: piexifjs.ExifDict,
     imgWidth: number,
     imgHeight: number,
     userCommentAscii: string,
-  ): piexifjs.ExifObject {
+  ): piexifjs.ExifDict {
     // validate userCommentAscii
     const asciiRangeValid = /^[\x00-\x7F]*$/.test(userCommentAscii);
     if (!asciiRangeValid) {
@@ -24,24 +24,25 @@ export class ExifUtils {
       throw new Error('User comment may only contain ASCII characters!');
     }
 
-    const newExif: piexifjs.ExifObject = {
+    const newExif: piexifjs.ExifDict = {
       '0th': {},
       Exif: {},
       GPS: {},
       Interop: {},
       '1st': {},
-      thumbnail: null,
+      thumbnail: undefined,
     };
-
     // extract whitelisted IDF0 tags
     const whitelistedIDF0Tags = [
       0x010f, // Exif.Image.Make
       0x0110, // Exif.Image.Model
       0x0132, // Exif.Image.DateTime
     ];
+    const orig0th = originalExif['0th'];
+    const new0th = newExif['0th'] as { [key: number]: any };
     for (const tag of whitelistedIDF0Tags) {
-      if (tag in originalExif['0th']) {
-        newExif['0th'][tag] = originalExif['0th'][tag];
+      if (orig0th && tag in orig0th) {
+        new0th[tag] = orig0th[tag];
       }
     }
     // extract whitelisted EXIF / Photo tags
@@ -79,55 +80,26 @@ export class ExifUtils {
       0xa433, // Exif.Photo.LensMake
       0xa434, // Exif.Photo.LensModel
     ];
+    const originalExifDict = originalExif.Exif;
+    const newExifDict = newExif.Exif as { [key: number]: any };
     for (const tag of whitelistedExifTags) {
-      if (tag in originalExif.Exif) {
-        newExif.Exif[tag] = originalExif.Exif[tag];
+      if (originalExifDict && tag in originalExifDict) {
+        newExifDict[tag] = originalExifDict[tag];
       }
     }
     // extract all GPS tags
     newExif.GPS = originalExif.GPS;
 
     // write new data to EXIF tags
-    newExif.Exif[0xa002] = imgWidth; // Exif.Photo.PixelXDimension
-    newExif.Exif[0xa003] = imgHeight; // Exif.Photo.PixelYDimension
-    newExif.Exif[0x9286] = userCommentAscii; // Exif.Photo.UserComment
+    newExifDict[0xa002] = imgWidth; // Exif.Photo.PixelXDimension
+    newExifDict[0xa003] = imgHeight; // Exif.Photo.PixelYDimension
+    newExifDict[0x9286] = userCommentAscii; // Exif.Photo.UserComment
 
     // write new data to IDF0 tags
-    newExif['0th'][0x0100] = imgWidth; // Exif.Image.ImageWidth
-    newExif['0th'][0x0101] = imgHeight; // Exif.Image.ImageLength
-    newExif['0th'][0x0131] = `iNat Editor 1.0`; // Exif.Image.Software
+    new0th[0x0100] = imgWidth; // Exif.Image.ImageWidth
+    new0th[0x0101] = imgHeight; // Exif.Image.ImageLength
+    new0th[0x0131] = `iNat Editor 1.0`; // Exif.Image.Software
 
     return newExif;
-  }
-
-  static logExif(exifObj: piexifjs.ExifObject) {
-    for (const ifd in exifObj) {
-      if (ifd == 'thumbnail') {
-        const thumbnailData = exifObj[ifd];
-        const thumbComment = thumbnailData ? `available, ${thumbnailData.length} chars` : 'missing';
-        console.log(`- thumbnail: ${thumbComment}`);
-      } else {
-        const ifdTyped = ifd as '0th' | 'Exif' | 'GPS' | 'Interop' | '1st';
-        console.log(`- ${ifd}`);
-        for (const tag in exifObj[ifdTyped]) {
-          const stringValue = `${exifObj[ifdTyped][tag]}`;
-          console.log(`    - ${piexifjs.TAGS[ifdTyped][tag]['name']}: ${stringValue.substring(0, 30)}`);
-        }
-      }
-    }
-  }
-
-  static testExif(jpegData: string) {
-    if (!jpegData) return;
-    const exifObj = piexifjs.load(jpegData);
-    const exifBytes = piexifjs.dump(exifObj);
-    const jpegDataClean = piexifjs.remove(jpegData);
-    const newData = piexifjs.insert(exifBytes, jpegDataClean);
-    console.log('exifObj', exifObj);
-    console.log('jpegData', jpegData.length);
-    console.log('jpegDataClean', jpegDataClean.length);
-    console.log('newData', newData.length);
-
-    ExifUtils.logExif(exifObj);
   }
 }

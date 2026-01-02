@@ -10,7 +10,7 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { FsItem } from '../utils/fs-item';
@@ -37,36 +37,33 @@ interface TwoCorners {
 
 @Component({
   selector: 'ie-image-editor',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, CommonModule],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule],
   template: `
     <div class="canvas-area">
       <canvas #imageCanvas class="image-canvas"></canvas>
       <canvas #overlayCanvas class="overlay-canvas" (mousedown)="mouseDownCanvas($event)"></canvas>
     </div>
-    <div
-      *ngIf="floatingBtns"
-      class="floating-buttons"
-      [style.left.px]="floatingBtns.left"
-      [style.top.px]="floatingBtns.top"
-      [style.width.px]="floatingBtns.width"
-      [style.height.px]="floatingBtns.height"
-    >
-      <button mat-mini-fab color="warn" (click)="cancelCrop()" matTooltip="Clear selection">
-        <mat-icon>close</mat-icon>
-      </button>
-      <button
-        *ngIf="floatingBtns.showReduceSize"
-        mat-mini-fab
-        color="warn"
-        (click)="reduceBoxSize()"
-        matTooltip="Reduce selected area size"
+    @if (floatingBtns) {
+      <div
+        class="floating-buttons"
+        [style.left.px]="floatingBtns.left"
+        [style.top.px]="floatingBtns.top"
+        [style.width.px]="floatingBtns.width"
+        [style.height.px]="floatingBtns.height"
       >
-        <mat-icon>close_fullscreen</mat-icon>
-      </button>
-      <button mat-mini-fab color="primary" (click)="cropImage()" matTooltip="Export selected area">
-        <mat-icon>check</mat-icon>
-      </button>
-    </div>
+        <button mat-mini-fab color="warn" (click)="cancelCrop()" matTooltip="Clear selection">
+          <mat-icon>close</mat-icon>
+        </button>
+        @if (floatingBtns.showReduceSize) {
+          <button mat-mini-fab color="warn" (click)="reduceBoxSize()" matTooltip="Reduce selected area size">
+            <mat-icon>close_fullscreen</mat-icon>
+          </button>
+        }
+        <button mat-mini-fab color="primary" (click)="cropImage()" matTooltip="Export selected area">
+          <mat-icon>check</mat-icon>
+        </button>
+      </div>
+    }
   `,
   styleUrl: 'image-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
