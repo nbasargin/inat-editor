@@ -17,11 +17,10 @@ export class FsResolver {
     return { iNatFolder, iNatNewFolder };
   }
 
-  static async findINatFolders(imageFile: FsItem<FileSystemFileHandle>): Promise<{
+  static async findINatFoldersInFolder(imageFolder: FsItem<FileSystemDirectoryHandle>): Promise<{
     iNatFolder: FsItem<FileSystemDirectoryHandle> | null;
     iNatNewFolder: FsItem<FileSystemDirectoryHandle> | null;
   }> {
-    const imageFolder = imageFile.parent;
     if (!imageFolder) {
       throw new Error('Image file has no folder specified');
     }
@@ -41,6 +40,17 @@ export class FsResolver {
       ? new FsItem<FileSystemDirectoryHandle>(iNatNewFolderHandle, imageFolder)
       : null;
     return { iNatFolder, iNatNewFolder };
+  }
+
+  static async findINatFoldersForImage(imageFile: FsItem<FileSystemFileHandle>): Promise<{
+    iNatFolder: FsItem<FileSystemDirectoryHandle> | null;
+    iNatNewFolder: FsItem<FileSystemDirectoryHandle> | null;
+  }> {
+    const imageFolder = imageFile.parent;
+    if (!imageFolder) {
+      throw new Error('Image file has no folder specified');
+    }
+    return this.findINatFoldersInFolder(imageFolder);
   }
 
   static async findFreeExportFileName(
@@ -93,11 +103,15 @@ export class FsResolver {
     return fileNames;
   }
 
-  private static removeFileExtension(fileName: string): string {
+  static removeFileExtension(fileName: string): string {
     return fileName.replace(/\.[^/.]+$/, '');
   }
 
-  private static removeBackupSuffix(fileName: string): string {
+  static removeBackupSuffix(fileName: string): string {
     return fileName.replace('_iNat_backup', '');
+  }
+
+  static removeINatSuffix(fileName: string): string {
+    return fileName.split('_iNat')[0];
   }
 }

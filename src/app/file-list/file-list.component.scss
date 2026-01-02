@@ -39,6 +39,12 @@
   flex-shrink: 0;
 }
 
+.entry-has-crop {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.3em;
+  text-align: center;
+}
 .entry-name {
   height: 24px;
   line-height: 24px;

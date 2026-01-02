@@ -48,7 +48,7 @@ export class ImageLoader3 {
   }
 
   static async readRelatedImagesData(mainImage: FsItem<FileSystemFileHandle>): Promise<RelatedImagesData> {
-    const { iNatFolder, iNatNewFolder } = await FsResolver.findINatFolders(mainImage);
+    const { iNatFolder, iNatNewFolder } = await FsResolver.findINatFoldersForImage(mainImage);
     const iNatImages = iNatFolder ? await FsResolver.findRelatedImages(iNatFolder, mainImage.handle.name) : [];
     const iNatNewImages = iNatNewFolder ? await FsResolver.findRelatedImages(iNatNewFolder, mainImage.handle.name) : [];
     const relatedImages = [...iNatImages, ...iNatNewImages];

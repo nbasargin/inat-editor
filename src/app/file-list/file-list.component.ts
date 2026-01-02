@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -11,11 +12,14 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule, MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { FsItem } from '../utils/fs-item';
+import { FsResolver } from '../utils/fs-resolver';
 
 interface FileListItem {
   fsItem: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>;
   icon: string;
   disabled: boolean;
+  hasCrop: boolean;
+  thumbnail?: string;
 }
 
 @Component({
@@ -29,7 +33,7 @@ interface FileListItem {
         <span class="entry-name">..</span>
       </div>
     }
-    @for (listItem of fileListItems; track listItem) {
+    @for (listItem of fileListItems; track trackListItem(listItem)) {
       <div
         class="folder-entry"
         [class.selected]="selectedFile && listItem.fsItem.handle === selectedFile.handle"
@@ -38,9 +42,12 @@ interface FileListItem {
         #listItemDiv
       >
         <mat-icon [fontIcon]="listItem.icon" class="entry-icon"></mat-icon>
-        <span class="entry-name" [matTooltip]="listItem.fsItem.handle.name" [matTooltipShowDelay]="200">{{
-          listItem.fsItem.handle.name
-        }}</span>
+        <span class="entry-has-crop">
+          {{ listItem.hasCrop ? '*' : '' }}
+        </span>
+        <span class="entry-name" [matTooltip]="listItem.fsItem.handle.name" [matTooltipShowDelay]="200">
+          {{ listItem.fsItem.handle.name }}
+        </span>
       </div>
     }
     @if (fileListItems.length === 0) {
@@ -60,6 +67,11 @@ export class FileListComponent {
   @Input() set fileList(list: Array<FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>>) {
     this.fileListItems = list.map((file) => this.fsItemToListItem(file));
     this.scrollToTop();
+    // set crop flags
+    const folder = list.length > 0 ? list[0].parent : null;
+    if (folder) {
+      this.setHasCropForListItems(this.fileListItems, folder);
+    }
   }
 
   // selected item
@@ -79,7 +91,10 @@ export class FileListComponent {
   @Output() folderSelected = new EventEmitter<FsItem<FileSystemDirectoryHandle>>();
   @Output() fileSelected = new EventEmitter<FsItem<FileSystemFileHandle>>();
 
-  constructor(private hostRef: ElementRef) {}
+  constructor(
+    private hostRef: ElementRef,
+    private change: ChangeDetectorRef,
+  ) {}
 
   private fsItemToListItem(fsItem: FsItem<FileSystemDirectoryHandle | FileSystemFileHandle>): FileListItem {
     const icon = fsItem.handle.kind === 'directory' ? 'folder' : 'insert_drive_file';
@@ -89,6 +104,7 @@ export class FileListComponent {
       fsItem: fsItem,
       icon: icon,
       disabled: disabled,
+      hasCrop: false,
     };
   }
 
@@ -98,6 +114,39 @@ export class FileListComponent {
     } else if (fsItem.handle instanceof FileSystemDirectoryHandle) {
       this.folderSelected.emit(fsItem as FsItem<FileSystemDirectoryHandle>);
     }
+  }
+
+  trackListItem(listItem: FileListItem) {
+    return listItem.fsItem.handle.name + listItem.hasCrop + !!listItem.thumbnail;
+  }
+
+  async setHasCropForListItems(fileListItems: Array<FileListItem>, folder: FsItem<FileSystemDirectoryHandle>) {
+    if (fileListItems.length === 0) {
+      return;
+    }
+    const { iNatFolder, iNatNewFolder } = await FsResolver.findINatFoldersInFolder(folder);
+    const iNatFileNames = new Set<string>();
+    const folders: FsItem<FileSystemDirectoryHandle>[] = [iNatFolder, iNatNewFolder].filter((f) => !!f);
+    // collect file names
+    for (let f of folders) {
+      for await (let handle of f.handle.values()) {
+        if (handle.kind === 'file') {
+          const fileName = handle.name;
+          const fileNameClean = FsResolver.removeINatSuffix(fileName);
+          iNatFileNames.add(fileNameClean);
+        }
+      }
+    }
+    // set flags
+    for (let listItem of fileListItems) {
+      if (listItem.fsItem.handle.kind === 'file') {
+        const fileName = listItem.fsItem.handle.name;
+        const fileNameNoExt = FsResolver.removeFileExtension(fileName);
+        const fileNameClean = FsResolver.removeBackupSuffix(fileNameNoExt);
+        listItem.hasCrop = iNatFileNames.has(fileNameClean);
+      }
+    }
+    this.change.markForCheck();
   }
 
   private scrollSelectedItemIntoView(fsItem: FsItem<FileSystemFileHandle>) {
