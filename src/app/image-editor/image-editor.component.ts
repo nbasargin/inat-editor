@@ -108,6 +108,9 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     if (event.key === 'Escape') {
       this.cancelCrop();
     }
+    if (event.key === 'End') {
+      this.setFullCropImage();
+    }
   }
 
   mouseDownCanvas(e: MouseEvent) {
@@ -170,6 +173,14 @@ export class ImageEditorComponent implements OnInit, OnDestroy {
     this.resizeCanvasIfNeeded();
     this.updateOverlay();
     this.redrawImage();
+  }
+
+  setFullCropImage() {
+    if (!this.allowCrop || !this.imageState) {
+      return;
+    }
+    this.imageState.regionSelector.setFullImageCrop();
+    this.updateOverlay();
   }
 
   cropImage() {

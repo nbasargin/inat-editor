@@ -65,6 +65,18 @@ export class RegionSelector {
     };
   }
 
+  setFullImageCrop() {
+    // Select the largest square that fits the image and center it.
+    const side = Math.min(this.imgWidth, this.imgHeight);
+    const offsetX = Math.round((this.imgWidth - side) / 2);
+    const offsetY = Math.round((this.imgHeight - side) / 2);
+    this.state = {
+      state: 'DEFINED',
+      imgCorner1: { imgX: offsetX, imgY: offsetY },
+      imgCorner2: { imgX: offsetX + side, imgY: offsetY + side },
+    };
+  }
+
   mouseDown(imageXY: ImageXY) {
     if (this.state.state === 'EMPTY') {
       const imgCoord = this.clipImageCoords(imageXY);
